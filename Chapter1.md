@@ -7,7 +7,8 @@ Declarations and Modules
 -------
 
 Haskell code consists of a set of **declarations**, or statements that declare something to be true.
-The simplest example of a declaration, called a **value binding**, is one that names a value.  For example:
+The simplest example of a declaration is one that names a value. This is called a **binding**. For example,
+the following binding declares that the number 5 can be referred to by the name `x`:
 
 ```hs
 x = 5
@@ -24,8 +25,8 @@ y = 6
 z = 7
 ```
 
-The declarations within a module can refer to each other.  For instance, in the following module, `x` and `y` are
-both names for the same value:
+The declarations within a module can refer to each other.  For instance, in the following module, `y` is
+declared to be a name for the same value as `x`:
 
 ```hs
 module Foo where
@@ -45,10 +46,9 @@ x = 5
 ```
 
 By default, declarations can only refer to others within the same module. However, a module may use an
-**import declaration**, which states that another module's declarations are available to be referenced.
-Import declarations are an exception to the rule that order doesn't matter: While the order of imports
-themselves don't matter, all imports must appear at the top of the module. Here is an example of three
-modules, with one importing the others and referring to their bindings:
+**import statement**, which states that another module's declarations are available to be referenced.
+All imports must appear at the top of the module. Here is an example of three modules, with one importing
+the others and referring to their bindings:
 
 ```hs
 module Foo where
@@ -72,8 +72,8 @@ w = y
 
 If a module is defined in the above way, then *all* of its declarations will be usable from any other
 module that imports it. In other words, all of its declarations are **exported**. However, we can
-refine this by giving it an explicit **export list**. Here is an example of a module exporting only
-some of its declarations:
+refine this by giving it an explicit **export list**. Here is an example of a module exporting a
+portion of its declarations:
 
 ```hs
 module Foo(x, y) where
