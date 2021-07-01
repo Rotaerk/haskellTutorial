@@ -3,6 +3,50 @@
 Chapter 1 - Hello World
 =======================
 
+In your command-line shell, navigate to the `./ch1` directory.
+
+Expressions and Values
+------
+
+Generally speaking, computation is the transformation of information according to a defined process.
+Haskell is a language for describing a certain kind of information and is accompanied by a defined
+process for transforming it. The kind of information described in Haskell is called an **expression**,
+which is a syntactic arrangement of symbols. The process for transforming expressions, called
+**evaluation**, is the iterative use of rules for replacing symbols in the expression with other symbols.
+For some expressions, this process can go on forever unless interrupted. For others, it eventually reaches
+a point where it can go no further, and the resulting expression is said to be **fully evaluated**. A fully
+evaluated expression is called a **value**.
+
+Let's play with some simple Haskell expressions. In your command-line shell, run `ghci`. It should
+present you with something like this:
+
+```console
+GHCi, version 8.10.4: https://www.haskell.org/ghc/  :? for help
+Prelude>
+```
+
+This is a very useful interactive tool that comes with GHC. The most common use case is to enter a
+Haskell expression, and it will attempt to fully evaluate it and respond with the resulting value.
+If what you enter isn't a valid expression, you will get an error. You can exit GHCi at any time by
+entering `:q`.
+
+Try entering each of the below expressions, one at a time, to see how it responds:
+
+```hs
+1.35
+"Hello"
+('a', True)
+[5,6,7]
+1 / 3
+-9 * (1 + 8) 
+'b' == 'c'
+"Super" ++ "man"
+(1 + 1 == 2, [1,2] ++ [3,4])
+```
+
+If GHCi responded with exactly what you entered, then it was already a value. Otherwise, what it gave
+you was the value resulting from fully evaluating the provided expression.
+
 Declarations and Modules
 -------
 
@@ -46,9 +90,9 @@ x = 5
 ```
 
 By default, declarations can only refer to others within the same module. However, a module may use an
-**import statement**, which states that another module's declarations are available to be referenced.
-All imports must appear at the top of the module. Here is an example of three modules, with one importing
-the others and referring to their bindings:
+**import statement** to state that another module's declarations are available to be referenced. All imports
+must appear at the top of the module. Here is an example of three modules, with one importing the others and
+referring to their bindings:
 
 ```hs
 module Foo where
