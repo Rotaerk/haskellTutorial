@@ -5,7 +5,7 @@ Chapter 1 - Hello World
 
 In your command-line shell, navigate to the `./ch1` directory.
 
-Expressions and Values
+Expressions
 ------
 
 Generally speaking, computation is the transformation of information according to a defined process.
@@ -47,47 +47,69 @@ Try entering each of the below expressions, one at a time, to see how it respond
 If GHCi responded with exactly what you entered, then it was already a value. Otherwise, what it gave
 you was the value resulting from fully evaluating the provided expression.
 
-Declarations and Modules
+Declarations
 -------
 
-Haskell code consists of a set of **declarations**, or statements that declare something to be true.
-The simplest example of a declaration is one that names a value. This is called a **binding**. For example,
-the following binding declares that the number 5 can be referred to by the name `x`:
+While the goal of Haskell code is to define expressions to be evaluated by a program, the form it takes
+is that of a set of **declarations**, or statements that declare something to be true. The simplest example
+of a declaration is one that names an expression. This is called a **binding**. These names are alphanumeric
+and must begin with a lowercase letter. For example, the following binding declares that the expression
+`1 + 2` can be referred to by the name `x`:
 
 ```hs
-x = 5
+x = 1 + 2
 ```
 
-Declarations are grouped into named organizational units called **modules**. To define a module called `Foo`
-that contains the above binding along with a couple more, you can write:
+As a result of the binding, the name `x` becomes a valid expression, and the binding essentially says that if
+you ever need to evaluate `x`, the first step to do so is to replace it with the expression it is bound to. 
 
-```hs
-module Foo where
+GHCi accepts bindings, so try entering the above into it.  Notice that it does not give you back a result
+because it is a binding rather than an expression. Once that is in place, enter `x` and note the result.
 
-x = 5
-y = 6
-z = 7
-```
+Modules
+-------
 
-The declarations within a module can refer to each other.  For instance, in the following module, `y` is
-declared to be a name for the same value as `x`:
+Outside of GHCi, when writing Haskell source code files, declarations are grouped into named organizational
+units called **modules**.  Module names are alphanumeric and must begin with an uppercase letter.  They may
+contain dots, so for instance, `Foo.Bar.Baz` is a valid module name. In GHC's implementation of Haskell,
+each module is required to be in its own file named after the module and typically with a `.hs` file name
+extension. Furthermore, the module name has a direct correspondence to the file's relative path within the
+source code directory. The dots are interpreted to as directory separators, so for instance, `Foo.Bar.Baz`
+is expected to be in `Foo/Bar/Baz.hs`.
 
-```hs
-module Foo where
-
-x = 5
-y = x
-```
-
-Declarations can appear in any order within the module, and this doesn't affect their ability to refer to one another.
-For instance the above module can be rewritten:
+Let's define a module called `Foo` that contains the above binding along with a couple more. Create a new
+file called `Foo.hs` (assuming you're still in the `./ch1` directory) and write this to it:
 
 ```hs
 module Foo where
 
-y = x
-x = 5
+x = 1 + 2
+y = "Hello " ++ "there"
+z = (True, 'b')
 ```
+
+If you still have GHCi running (assuming you launched it from the `./ch1` directory), you can load this
+module by entering `:load Foo`. If you don't, you can run `ghci Foo`, and it will load the module on
+startup. Once loaded, `x`, `y`, and `z` are usable expressions, so you can enter them to see their
+values displayed.
+
+The declarations within a module (including bindings) can refer to each other regardless of the
+order they are in. (This isn't true for bindings directly entered into GHCi; you can't refer to a
+name that isn't bound yet.)  For instance, edit Foo.hs to look like this:
+
+```hs
+module Foo where
+
+x = y
+y = (1 + 2, z)
+z = "Hello"
+```
+
+Load that into GHCi. (Note: If you still have a GHCi session open in which you loaded `Foo` previously,
+you can just enter `:reload`.) Once loaded, you'll find that `x` evaluates to `(3, "Hello")` as expected. 
+
+TODO: Continue Here
+====
 
 By default, declarations can only refer to others within the same module. However, a module may use an
 **import statement** to state that another module's declarations are available to be referenced. All imports
