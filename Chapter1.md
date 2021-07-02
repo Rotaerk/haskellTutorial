@@ -21,9 +21,9 @@ symbols or groups of symbols in the expression, called **sub-expressions**, with
 by following defined rules. For instance if we have a rule that tells us to replace `a + b`
 with the sum of `a` and `b`, then `1 + 2 + 3` can be evaluated as follows:
 
-- `1 + 2 + 3` - start
-- `3 + 3` - replace the subexpression `1 + 2` with `3`
-- `6` - replace `3 + 3` with `6`
+1. `1 + 2 + 3` - start
+2. `3 + 3` - replace the subexpression `1 + 2` with `3`
+3. `6` - replace `3 + 3` with `6`
 
 For some expressions, this process can go on forever unless interrupted. For others, like the above
 example, evaluation eventually reaches a point where it can go no further, and the resulting
@@ -48,15 +48,15 @@ isn't a valid expression, you will get an error message.
 
 Try entering each of the below expressions to see how it responds:
 
-- `1.35`
-- `"Hello"`
-- `('a', True)`
-- `[5,6,7]`
-- `1 / 3`
-- `-9 * (1 + 8) `
-- `'b' == 'c'`
-- `"Super" ++ "man"`
-- `(1 + 1 == 2, [1,2] ++ [3,4])`
+1. `1.35`
+2. `"Hello"`
+3. `('a', True)`
+4. `[5,6,7]`
+5. `1 / 3`
+6. `-9 * (1 + 8) `
+7. `'b' == 'c'`
+8. `"Super" ++ "man"`
+9. `(1 + 1 == 2, [1,2] ++ [3,4])`
 
 Literals and Variables
 ---------
@@ -77,30 +77,34 @@ and they exist to represent *another* expression. A variable is defined through 
 **binding**, which entails specifying a name for it along with the expression it should stand for.
 Evaluation of any variable always starts by replacing it with the expression it is bound to.
 
-It should be noted that every variable has a limited context, or **scope**, in which it exists,
-outside of which it is not considered to be bound. Different scopes may have different variables
-with the same name bound to different expressions. If a variable is bound in the current context,
-it is said to be "in scope".
+It should be noted that every variable has a limited context, or **scope**, in which it exists.
+Different scopes may have different variables with the same name bound to different expressions.
+If a variable is bound in the current context, it is said to be "in scope".
 
 One way to bind a variable is called a **let binding**, which looks like this:
 
 `let x = 1 + 2 in x * x`
 
 What this does is bind a variable named `x` to the expression `1 + 2` with a scope limited to the
-expression following the `in`. A let binding is also an expression, and evaluating it entails
-evaluating the expression after the `in` in a context where the variable is bound. Try it out by
+let binding itself. A let binding is also an expression, and evaluating it entails evaluating
+the expression after the `in` in a context where the variable is bound. Try it out by
 entering it into GHCi. Here are a few more examples to try:
 
-- `let h = "Hello" in (h, h)`
-- `let num = 5 in num == 5`
-- `let notUsed = 500 in "Hello"`
-- `let _Foo = 1 in let bar' = 2 in _Foo + bar'`
+1. `let h = "Hello" in (h, h)`
+2. `let num = 5 in num == 5`
+3. `let notUsed = 500 in "Hello"`
+4. `let _Foo = 1 in let bar' = 2 in _Foo + bar'`
 
 That last example works because, again, let bindings are expressions, and *any* expression can be
 placed after the `in`. However, this isn't typically done because you can bind multiple variables
 in a single let binding, so it can be rewritten like this:
 
 `let { _Foo = 1; bar' = 1 } in _Foo + bar'`
+
+These variables are in scope for the *whole* let binding, so the expressions bound to the variables
+may refer to the variables themselves, and it doesn't matter which order they come in:
+
+`let { a = b; b = 3 + 1; c = a } in a + c`
 
 **Note:** Variable names must start with a *lowercase* letter or an underscore (`_`), while the remaining
 characters may be letters, digits, apostrophes (`'`), and underscores. Within those constraints,
@@ -109,15 +113,61 @@ you can name them whatever you want.
 Functions
 ---------
 
-An ubiquitous type of value in Haskell, called a **function**, has the syntax `\<identifier> -> <expression>`
-where `<expression>` is a valid e, where `x` is a
-name or **identifier**
+A **function** is a value that describes how to build an expression from another expression, if one
+were to be supplied.  When a function is supplied with an expression to use, it is said that the
+function is **applied** to an **argument**. Here is an example of a function:
 
-```hs
-\x -> y
-```
+`\x -> x + x`
 
-Where `x`
+**Note:** Functions cannot be displayed by GHCi, so if you enter the above into it, you will get an error.
+
+The `\x` introduces a variable, `x`, that will be bound to the argument when the function is applied to one.
+Such variables are called **parameters**. Parameters are bound to arguments *per* function application,
+so in one application `x` can be bound to `1`, while in another it can be bound to `2`. The scope of this
+parameter is the entire expression after the `->`.
+
+To apply a function, you simply put the argument after the function separated by whitespace. However,
+function syntax is greedy and assumes that everything after the `->` is part of its result expression,
+so `\x -> x + x 5` will not work. To resolve this you can wrap the function in parentheses:
+
+`(\x -> x + x) 5`
+
+Now, while a *function* is a value, and thus cannot be evaluated any further, a function *application*
+such as this can be. Evaluation entails replacing the function and its argument with a let binding that
+binds the parameter to the argument and evaluates the expression inside the function. So for example, 
+the above expression is evaluated like this:
+
+1. `(\x -> x + x) 5` - start
+2. `let x = 5 in x + x` - bind the parameter to the argument
+3. `5 + 5` - evaluate the `x`s by replacing them with bound expression, `5`
+4. `10`
+
+Another way to apply a function is to bind a variable to it and apply that:
+
+`let f = \x -> x + 1 in f 5`
+
+When binding a variable to a function, there is a simpler alternative syntax (also known as "syntax sugar")
+that allows you to rewrite the above expression as:
+
+`let f x = x + 1 in f 5`
+
+Go ahead and try entering those examples into GHCi along with these:
+
+1. `(\x -> "Hello, " ++ x) "World!"`
+2. `(\notUsed -> [1,2,3]) 100`
+3. `let g x = x * 2 in (g 10, g 20)`
+4. `let h a = a + 1 in h 5 * 2`
+5. `let h a = a + 1 in h (5 * 2)`
+6. `(\x -> \y -> x * y + 1) 5 2`
+
+That last example works because functions are values (which are expressions), and any valid expression
+may follow the `->`. So the function with parameter `x` is given `5` as an argument and builds an
+expression that is another function with `x` replaced by `5`, like: `\y -> 5 * y + 1`. Then *that* function
+is given `2` as an argument and builds an arithmetic expression that uses both `5` and `2`,
+
+That example can also be rewritten using syntax sugar as:
+
+`let f x y = x * y + 1 in f 5 2`
 
 Declarations
 -------
@@ -179,9 +229,6 @@ z = "Hello"
 
 Load that into GHCi. (Note: If you still have a GHCi session open in which you loaded `Foo` previously,
 you can just enter `:reload`.) Once loaded, you'll find that `x` evaluates to `(3, "Hello")` as expected. 
-
-TODO: Continue Here
-====
 
 By default, declarations can only refer to others within the same module. However, a module may use an
 **import statement** to state that another module's declarations are available to be referenced. All imports
