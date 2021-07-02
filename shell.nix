@@ -1,9 +1,12 @@
 { pkgs ? import <nixpkgs> {} }:
 with pkgs;
+with haskellPackages;
 mkShell {
   packages =
-    with haskellPackages; [
+    [ python39Packages.grip ]
+    ++
+    (with haskellPackages; [
       ghc
       cabal-install
-    ];
+    ]);
 }
