@@ -121,10 +121,9 @@ function is **applied** to an **argument**. Here is an example of a function:
 
 **Note:** Functions cannot be displayed by GHCi, so if you enter the above into it, you will get an error.
 
-The `\x` introduces a variable, `x`, that will be bound to the argument when the function is applied to one.
-Such variables are called **parameters**. Parameters are bound to arguments *per* function application,
-so in one application `x` can be bound to `1`, while in another it can be bound to `2`. The scope of this
-parameter is the entire expression after the `->`.
+The `\x` introduces the variable `x`, which will be bound to the argument when the function is applied.
+Such variables are called **parameters**. The scope of a parameter is the entire expression after
+the `->`, and this scope is *per* function application.
 
 To apply a function, you simply put the argument after the function separated by whitespace. However,
 function syntax is greedy and assumes that everything after the `->` is part of its result expression,
@@ -132,40 +131,41 @@ so `\x -> x + x 5` will not work. To resolve this you can wrap the function in p
 
 `(\x -> x + x) 5`
 
-Now, while a *function* is a value, and thus cannot be evaluated any further, a function *application*
-such as this can be. Evaluation entails replacing the function and its argument with a let binding that
-binds the parameter to the argument and evaluates the expression inside the function. So for example, 
-the above expression is evaluated like this:
+This function application is an expression that creates a temporary context where `x` is bound to `5`
+and then evaluates to `x + x`. In other words, it is equivalent to the following:
 
-1. `(\x -> x + x) 5` - start
-2. `let x = 5 in x + x` - bind the parameter to the argument
-3. `5 + 5` - evaluate the `x`s by replacing them with bound expression, `5`
-4. `10`
+`let x = 5 in x + x`
 
-Another way to apply a function is to bind a variable to it and apply that:
+Another way to apply a function is to bind a variable to it and apply that, so this can be rewritten as:
 
-`let f = \x -> x + 1 in f 5`
+`let f = \x -> x + x in f 5`
 
 When binding a variable to a function, there is a simpler alternative syntax (also known as "syntax sugar")
 that allows you to rewrite the above expression as:
 
-`let f x = x + 1 in f 5`
+`let f x = x + x in f 5`
 
 Go ahead and try entering those examples into GHCi along with these:
 
 1. `(\x -> "Hello, " ++ x) "World!"`
 2. `(\notUsed -> [1,2,3]) 100`
 3. `let g x = x * 2 in (g 10, g 20)`
-4. `let h a = a + 1 in h 5 * 2`
-5. `let h a = a + 1 in h (5 * 2)`
+4. `let h a = a + 1 in h 2 * 10`
+5. `let h a = a + 1 in h (2 * 10)`
 6. `(\x -> \y -> x * y + 1) 5 2`
 
-That last example works because functions are values (which are expressions), and any valid expression
-may follow the `->`. So the function with parameter `x` is given `5` as an argument and builds an
-expression that is another function with `x` replaced by `5`, like: `\y -> 5 * y + 1`. Then *that* function
-is given `2` as an argument and builds an arithmetic expression that uses both `5` and `2`,
+Notice in that last example that we have a function that builds an expression that is, itself, another
+function. Thus, the application to `5` results in another function that is in-turn applied to `2`.
+First, a temporary context is created in which `x` is bound to `5` and `(\y -> x * y + 1) 2` is
+evaluated. In other words, it's equivalent to this:
 
-That example can also be rewritten using syntax sugar as:
+`let x = 5 in (\y -> x * y + 1) 2`
+
+Then a second temporary context is created in which `y` is bound to `2`, and `x * y + 1` is evaluated:
+
+`let x = 5 in let y = 2 in x * y + 1`
+
+The function binding syntax sugar mentioned earlier also allows the above expression to be rewritten as:
 
 `let f x y = x * y + 1 in f 5 2`
 
