@@ -3,7 +3,7 @@
 Chapter 1 - Hello World
 =======================
 
-In your command-line shell, navigate to the `./ch1` directory.
+In your command-line shell, navigate to the `ch1/` directory.
 
 Expressions and Evaluation
 ------
@@ -95,9 +95,9 @@ the above example. Notice that GHCi doesn't reply back to you. This is because d
 expressions and cannot be evaluated. Once you've entered that binding, enter the expression `num`
 and note the result.
 
-**Note:** Variable names must start with a *lowercase* letter or an underscore (`_`), while the
-remaining characters may be letters (including uppercase), digits, apostrophes (`'`), and underscores.
-Within those constraints, you can name them whatever you want.
+Variable names must start with a *lowercase* letter or an underscore (`_`), while the remaining
+characters may be letters (including uppercase), digits, apostrophes (`'`), and underscores. Within
+those constraints, you can name them whatever you want.
 
 Let Expressions
 ---------------
@@ -139,6 +139,8 @@ referred to as "let bindings".
 Functions
 ---------
 
+### Introduction
+
 A **function** is a value that describes how to build an expression from another expression, if one
 were to be supplied.  When a function is supplied with an expression to use, it is said that the
 function is **applied** to an **argument**. Here is an example of a function written using a notation
@@ -152,7 +154,9 @@ The `\x` introduces the variable `x`, which will be bound to the argument when t
 Such variables are called **parameters**. The scope of a parameter is the entire expression after
 the `->`, and this scope is *per* function application.
 
-To apply a function, you simply put the argument after the function separated by whitespace. However,
+### Application
+
+To apply a function, you simply put the argument after the function, separated by whitespace. However,
 lambda syntax is greedy and assumes that all the symbols after the `->` are part of it, so `\x -> x + x 5`
 will not work. To resolve this you can wrap the lambda in parentheses:
 
@@ -179,11 +183,31 @@ Go ahead and try entering those examples into GHCi along with these:
 3. `let g x = x * 2 in (g 10, g 20)`
 4. `let h a = a + 1 in h 2 * 10`
 5. `let h a = a + 1 in h (2 * 10)`
-6. `(\x -> \y -> x * y + 1) 5 2`
 
-Notice in that last example that we have a function that builds an expression that is, itself, another
-function. Thus, the application to `5` results in another function that is in-turn applied to `2`.
-First, `x = 5` is temporarily brought into scope, and then `(\y -> x * y + 1) 2` is evaluated:
+### Multiple Arguments
+
+Because functions themselves are values, they can be the results of other functions, like this:
+
+`\x -> \y -> x * y + 1`
+
+Notice that not just `y` but also `x` is in scope for the inner function's result expression.
+This means that we *effectively* have a two-parameter function. This is the typical approach in
+Haskell for writing functions with multiple parameters.
+
+There is syntax sugar for such a lambda that looks like this:
+
+`\x y -> x * y + 1`
+
+Also, the syntax sugar mentioned earlier for binding variables to functions can be extended for this:
+
+`f x y = x * y + 1`
+
+To apply this function to two arguments, you would write this:
+
+`(\x y -> x * y + 1) 5 2`
+
+The way this evaluates is that first, `x = 5` is temporarily brought into scope, and `(\y -> x * y + 1) 2`
+is evaluated:
 
 `let x = 5 in (\y -> x * y + 1) 2`
 
@@ -191,24 +215,19 @@ Next, `y = 2` is temporarily brought into scope, and `x * y + 1` is evaluated:
 
 `let x = 5 in let y = 2 in x * y + 1`
 
-The function binding syntax sugar mentioned earlier also allows the above expression to be rewritten as:
+It's worth noting that we can apply the function to just one argument, bind a variable to the resulting
+function, and then supply the second argument later on, or even reuse the function multiple times on
+different arguments. This pattern is known as **partial application**:
 
-`let f x y = x * y + 1 in f 5 2`
+`let { f x y = x * y + 1; g = f 5 } in (g 2, g 3)`
 
-There is also syntax sugar for the lambda whose result is another lambda:
+### Functions as Arguments
 
-`(\x y -> x * y + 1) 5 2`
-
-**Note:** Because both the outer function's parameter, `x`, and the inner function's parameter, `y`, are
-in scope during the evaluation of the result expression, `x * y + 1`, nesting functions like this is the
-typical approach to taking multiple arguments in Haskell.
-
-And finally, one last example for you to try out:
+Again because functions themselves are values, they can be arguments to other functions, like this:
 
 `(\f -> f 1 + f 2) (\x -> x * 10)`
 
-In this case, the argument of the first function is another function. First, `f = \x -> x * 10` is
-brought into scope, and then `f 1 + f 2` is evaluated:
+The way this evaluates is that first, `f = \x -> x * 10` is brought into scope, and `f 1 + f 2` is evaluated:
 
 `let f x = x * 10 in f 1 + f 2`
 
@@ -225,100 +244,92 @@ At this point, `f` is no longer used on the right side of the `in`, so this is e
 Modules
 -------
 
-Outside of GHCi, when writing Haskell source code files, declarations are grouped into named organizational
-units called **modules**.  Module names are alphanumeric and must begin with an uppercase letter.  They may
-contain dots, so for instance, `Foo.Bar.Baz` is a valid module name. In GHC's implementation of Haskell,
-each module is required to be in its own file named after the module and typically with a `.hs` file name
-extension. Furthermore, the module name has a direct correspondence to the file's relative path within the
-source code directory. The dots are interpreted to as directory separators, so for instance, `Foo.Bar.Baz`
-is expected to be in `Foo/Bar/Baz.hs`.
+### Introduction
 
-Let's define a module called `Foo` that contains the above binding along with a couple more. Create a new
-file called `Foo.hs` (assuming you're still in the `./ch1` directory) and write this to it:
+Entering declarations and expressions into GHCi is useful for trying things out, but Haskell programming is
+done by writing source code into files that contain named organizational units called **modules**.  The
+content of a module is a set of declarations, whose scope is the entire module. These are called **top-level
+declarations**.
+
+A module's name is a series of sub-names separated by dots (`.`). Each sub-name must begin with an uppercase
+letter, but the remaining characters can be letters (including lowercase), digits, and apostrophes (`'`).
+In GHC's implementation of Haskell, each source file must have exactly one module in it. Furthermore, it
+expects the file's name and path relative to the source code directory to correspond to the module name.
+Specifically, if you have a module named `Foo.Bar.Baz`, it is expected to be in the file `Foo/Bar/Baz.hs`.
+
+Let's define a module called `Foo` that contains a few top-level binding declarations. We'll use `ch1/` as
+our source code directory. Go ahead and create a new file in it called `Foo.hs`, and write this to it:
 
 ```hs
 module Foo where
 
-x = 1 + 2
-y = "Hello " ++ "there"
-z = (True, 'b')
+add x y = x + y
+addThree = add three
+three = 1 + 2
 ```
 
-If you still have GHCi running (assuming you launched it from the `./ch1` directory), you can load this
-module by entering `:load Foo`. If you don't, you can run `ghci Foo`, and it will load the module on
-startup. Once loaded, `x`, `y`, and `z` are usable expressions, so you can enter them to see their
-values displayed.
+The `module Foo where` line is the module's **header**, and everything after it is its **body**.
 
-The declarations within a module (including bindings) can refer to each other regardless of the
-order they are in. (This isn't true for bindings directly entered into GHCi; you can't refer to a
-name that isn't bound yet.)  For instance, edit Foo.hs to look like this:
+Now in GHCi, assuming you started it from `ch1/`, you can load this module by entering `:load Foo`.
+Alternatively, you can start a new GHCi session that loads it immediately by running `ghci Foo` from the
+command-line. If you've already loaded a module into GHCi and you would like to reload it (e.g. if you
+changed something in the file), you can enter `:reload`.
 
+As a result of loading the module, all of its declarations are brought into scope for the rest of the
+GHCi session. Thus, if you enter `add 1 2`, `addThree 6`, and `three`, it should display their values.
+
+### Importing
+
+Modules can **export** top-level declarations for use by other modules. By default, all of them are
+exported. We'll cover how to refine this later. In order for another module to use the declarations exported
+by `Foo`, it must first **import** `Foo`. This is done using a special kind of declaration called an
+**import declaration**, which states that the exported top-level declarations of the imported module are
+in scope for the current module.
+
+**Note:** Import declarations are not considered top-level declarations, and they must all come before the
+top-level declarations in the module's body. The order of the import declarations themselves doesn't matter.
+
+Let's try this out. Go ahead and create a couple more module files:
+
+Bar.hs:
 ```hs
-module Foo where
-
-x = y
-y = (1 + 2, z)
-z = "Hello"
-```
-
-Load that into GHCi. (Note: If you still have a GHCi session open in which you loaded `Foo` previously,
-you can just enter `:reload`.) Once loaded, you'll find that `x` evaluates to `(3, "Hello")` as expected. 
-
-By default, declarations can only refer to others within the same module. However, a module may use an
-**import statement** to state that another module's declarations are available to be referenced. All imports
-must appear at the top of the module. Here is an example of three modules, with one importing the others and
-referring to their bindings:
-
-```hs
-module Foo where
-
-x = 5
-
-
 module Bar where
 
-y = 6
+x = 1
+y = 2
+z = 3
+```
 
-
+Baz.hs:
+```hs
 module Baz where
 
-import Bar
 import Foo
+import Bar
 
-z = x
-w = y
+addZ = add z
+threePlusXTimesY = addThree (x * y)
 ```
 
-If a module is defined in the above way, then *all* of its declarations will be usable from any other
-module that imports it. In other words, all of its declarations are **exported**. However, we can
-refine this by giving it an explicit **export list**. Here is an example of a module exporting a
-portion of its declarations:
+Go ahead and load `Baz` into GHCi. Doing so will automatically load the other two modules because it
+imports them.
 
-```hs
-module Foo(x, y) where
-
-x = 5
-y = z
-z = 6
-```
-
-If another module were to import `Foo`, it would be able to refer to `x` and `y` but not to `z`.
+### Prelude
 
 There is a standard module called **Prelude** that is implicitly imported into all modules, so all
-of its exported declarations can be immediately referred to from any other module. Here is an example
-of a module referring to a declaration from Prelude called `pi`:
+of its exported declarations are immediately in scope for every other module. The set of declarations
+exported by this module is extensive enough that we'll only cover some of them in this tutorial. Here
+is an example of a module referring to a variable exported by Prelude called `pi`:
 
 ```hs
-module Foo where
+module UsesPrelude where
 
 x = pi
 ```
 
-In GHC's implementation of haskell, each module is required to be in its own file, typically with a `.hs`
-file name extension. Furthermore, the module name has a direct correspondence to the file path relative
-to the base source code directory. A module's name may include dots, so for instance, `A.B.C` is a valid
-module name. The expected file path for this  module is `A/B/C.hs`. The earlier modules `Foo`, `Bar`,
-and `Baz` would belong in files called `Foo.hs`, `Bar.hs`, and `Baz.hs` at the root of the source
-code directory.
+You can also use `pi` from a fresh instance of GHCi without having loaded any modules.
+
+Procedures
+----------
 
 [Back](README.md) / [Top](README.md) / [Next](Chapter2.md)
