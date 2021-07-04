@@ -69,7 +69,7 @@ examples of each, which you can enter into GHCi to see its output:
 - Integer Literals: `100`, `35`, `0x23` (hexadecimal notation for 35), `0o23` (octal notation for 19)
 - Floating Literals: `3.14159`, `2.0`, `5e3`, `6.2E-3`
 - Character Literals: `'a'`, `','`, `'\n'` (the "newline" character), `'\65'` (the character
-  with unicode numeric representation 65; equivalent to `'A'`)
+  with Unicode numeric representation 65; equivalent to `'A'`)
 - String Literals: `"Hello World"`, `"\65\65\65"` (equivalent to `"AAA"`), `"Three\nLine\nString"`
 
 Variables and Declarations
@@ -98,6 +98,11 @@ and note the result.
 Variable names must start with a *lowercase* letter or an underscore (`_`), while the remaining
 characters may be letters (including uppercase), digits, apostrophes (`'`), and underscores. Within
 those constraints, you can name them whatever you want.
+
+**Note:** The following cannot be used as variable names due to Haskell reserving them for special
+purposes: `case`, `class`, `data`, `default`, `deriving`, `do`, `else`, `foreign`, `if`, `import`,
+`in`, `infix`, `infixl`, `infixr`, `instance`, `let`, `module`, `newtype`, `of`, `then`, `type`,
+`where`, `_`.
 
 Let Expressions
 ---------------
@@ -316,10 +321,10 @@ imports them.
 
 ### Prelude
 
-There is a standard module called **Prelude** that is implicitly imported into all modules, so all
-of its exported declarations are immediately in scope for every other module. The set of declarations
-exported by this module is extensive enough that we'll only cover some of them in this tutorial. Here
-is an example of a module referring to a variable exported by Prelude called `pi`:
+There is a standard module called **Prelude** that is implicitly imported into all other modules, so
+all of its exported declarations are immediately in scope for them. The set of declarations exported
+by Prelude is extensive enough that we'll only cover some of them in this tutorial. Here is an example
+of a module referring to a variable exported by Prelude called `pi`:
 
 ```hs
 module UsesPrelude where
@@ -328,6 +333,52 @@ x = pi
 ```
 
 You can also use `pi` from a fresh instance of GHCi without having loaded any modules.
+
+Operators
+---------
+
+### Introduction
+
+Let's go back to variables for a bit. There's actually another way they can be named: as a series of
+non-alphanumeric symbols wrapped in parentheses. Variables named in this manner are called **operators**.
+For instance, we can name an operator `(.+/<)`, such as in this expression:
+
+`let (.+/<) = 2 in (.+/<) + (.+/<)`
+
+While *allowed*, this is not how operators are generally used. They exist for a special purpose: If they
+are bound to a function with 2 arguments, they can be used in infix notation after stripping the
+parentheses. For instance:
+
+`let (-#-) x y = x * y in 2 -#- 3`
+
+We can also write the binding itself in infix notation:
+
+`let x -#- y = x * y in 2 -#- 3`
+
+The characters that may be used in operator names include these ASCII symbols: `!#$%&*+./<=>?@\^|-~:`.
+We can also use certain Unicode symbols.
+
+**Note:** The following cannot be used as operator names due to Haskell reserving them for special
+purposes: `(..)`, `(:)`, `(::)`, `(=)`, `(\)`, `(|)`, `(<-)`, `(->)`, `(@)`, `(~)`, and `(=>)`.
+
+### Standard Operators
+
+The Prelude exports many standard operators, including the arithmetic operators we've been using
+in prior examples. Whenever we wrote `a + b`, we could have alternatively written `(+) a b` to
+use the operator like any other function. We can also bind it to a variable like this:
+
+`let add = (+) in add 1 2`
+
+### Infix Functions
+
+Non-operator variables bound to functions that take 2 arguments can also be used in infix notation
+by wrapping them in backticks (`` ` ``) like this:
+
+``let foo x y = x * y in 2 `foo` 3``
+
+And even write the binding itself in infix notation:
+
+``let x `foo` y = x * y in foo 2 3``
 
 Procedures
 ----------
