@@ -50,13 +50,12 @@ Try entering each of the below expressions to see how it responds:
 
 1. `1.35`
 2. `"Hello"`
-3. `('a', True)`
-4. `[5,6,7]`
+3. `'a'`
+4. `True`
 5. `1 / 3`
 6. `-9 * (1 + 8) `
 7. `'b' == 'c'`
 8. `"Super" ++ "man"`
-9. `(1 + 1 == 2, [1,2] ++ [3,4])`
 
 Literals
 --------
@@ -71,6 +70,9 @@ examples of each, which you can enter into GHCi to see its output:
 - Character Literals: `'a'`, `','`, `'\n'` (the "newline" character), `'\65'` (the character
   with Unicode numeric representation 65; equivalent to `'A'`)
 - String Literals: `"Hello World"`, `"\65\65\65"` (equivalent to `"AAA"`), `"Three\nLine\nString"`
+
+**Note:** In the earlier examples of Haskell expressions, we saw some Boolean values, namely `True` and
+`False`. While single-symbol values, these are not literals. We'll cover what these are later.
 
 Variables and Declarations
 --------------------------
@@ -115,13 +117,13 @@ declarations. Here is an example:
 
 Evaluating a let expression entails temporarily bringing the declaration into scope, and then
 evaluating the expression after the `in`. Try it out by entering it into GHCi. Also note that
-afterwards, if you simply enter `x`, it will give you an error, because `x`'s limited scope.
+afterwards, if you simply enter `x`, it will give you an error, because of `x`'s limited scope.
 (If you previously entered a binding for `x` outside of a let expression, you will get the result
 of that instead of an error.)
 
 Here are a few more examples to try:
 
-1. `let h = "Hello" in (h, h)`
+1. `let s = "foo" in s ++ s`
 2. `let n = 5 in n == 5`
 3. `let notUsed = 500 in "Hello"`
 4. `let foo = 1 in let bar = 2 in foo + bar`
@@ -184,8 +186,8 @@ that allows you to rewrite the above expression as:
 Go ahead and try entering those examples into GHCi along with these:
 
 1. `(\x -> "Hello, " ++ x) "World!"`
-2. `(\notUsed -> [1,2,3]) 100`
-3. `let g x = x * 2 in (g 10, g 20)`
+2. `(\notUsed -> "Blah") 100`
+3. `let g x = x * 2 in g 10 + g 20`
 4. `let h a = a + 1 in h 2 * 10`
 5. `let h a = a + 1 in h (2 * 10)`
 
@@ -224,7 +226,7 @@ It's worth noting that we can apply the function to just one argument, bind a va
 function, and then supply the second argument later on, or even reuse the function multiple times on
 different arguments. This pattern is known as **partial application**:
 
-`let { f x y = x * y + 1; g = f 5 } in (g 2, g 3)`
+`let { f x y = x * y + 1; g = f 5 } in g 2 + g 3`
 
 ### Functions as Arguments
 
@@ -316,8 +318,8 @@ addZ = add z
 threePlusXTimesY = addThree (x * y)
 ```
 
-Go ahead and load `Baz` into GHCi. Doing so will automatically load the other two modules because it
-imports them.
+With those in place, load `Baz` into GHCi. Doing so will automatically load the other two modules because
+it imports them.
 
 ### Prelude
 
@@ -339,15 +341,16 @@ Operators
 
 ### Introduction
 
-Let's go back to variables for a bit. There's actually another way they can be named: as a series of
-non-alphanumeric symbols wrapped in parentheses. Variables named in this manner are called **operators**.
-For instance, we can name an operator `(.+/<)`, such as in this expression:
+Another type of expression that is used in the same manner as variables is called an **operator**. Like
+variables, operators are bound to expressions. The main differences between the two are syntax-related.
+First, operators are named as a series of non-alphanumeric symbols wrapped in parentheses. For instance,
+we can name an operator `(.+/<)`, such as in this expression:
 
 `let (.+/<) = 2 in (.+/<) + (.+/<)`
 
-While *allowed*, this is not how operators are generally used. They exist for a special purpose: If they
-are bound to a function with 2 arguments, they can be used in infix notation after stripping the
-parentheses. For instance:
+While *allowed*, this is not how operators are generally used. They exist for a special purpose: If they are
+bound to a function with two arguments, they can be used in infix notation after stripping the parentheses.
+For instance:
 
 `let (-#-) x y = x * y in 2 -#- 3`
 
@@ -355,30 +358,50 @@ We can also write the binding itself in infix notation:
 
 `let x -#- y = x * y in 2 -#- 3`
 
+Just remember that this binding is equivalent to `(-#-) = \x y -> x * y`.
+
 The characters that may be used in operator names include these ASCII symbols: `!#$%&*+./<=>?@\^|-~:`.
 We can also use certain Unicode symbols.
 
-**Note:** The following cannot be used as operator names due to Haskell reserving them for special
-purposes: `(..)`, `(:)`, `(::)`, `(=)`, `(\)`, `(|)`, `(<-)`, `(->)`, `(@)`, `(~)`, and `(=>)`.
+**Note:** The following cannot be used as operator names due to Haskell reserving them for special purposes:
+`(..)`, `(:)`, `(::)`, `(=)`, `(\)`, `(|)`, `(<-)`, `(->)`, `(@)`, `(~)`, and `(=>)`.
 
-### Standard Operators
+### Infix Variables
 
-The Prelude exports many standard operators, including the arithmetic operators we've been using
-in prior examples. Whenever we wrote `a + b`, we could have alternatively written `(+) a b` to
-use the operator like any other function. We can also bind it to a variable like this:
-
-`let add = (+) in add 1 2`
-
-### Infix Functions
-
-Non-operator variables bound to functions that take 2 arguments can also be used in infix notation
-by wrapping them in backticks (`` ` ``) like this:
+Variables bound to functions that take 2 arguments can also be used in infix notation by wrapping them in
+backticks (`` ` ``) like this:
 
 ``let foo x y = x * y in 2 `foo` 3``
 
 And even write the binding itself in infix notation:
 
 ``let x `foo` y = x * y in foo 2 3``
+
+### Standard Operators
+
+The Prelude exports many standard operators, some of which we've used in prior examples, including the
+arithmetic operators as well as `(++)`, which was used to contatenate strings. Whenever we wrote `a + b`, we
+could have alternatively written `(+) a b` to apply the operator like a function variable. We can also bind
+a variable to the operator like this:
+
+`let add = (+) in add 1 2`
+
+We can also partially apply the operator like any other function:
+
+`let add3 = (+) 3 in add3 1 + add3 2`
+
+To show that these arithmetic operators are not special syntax, but are just operators bound to expressions,
+you can rebind them in GHCi (not that this is generally recommended):
+
+`let a + b = 500 in 1 + 1`
+
+### Negation
+
+The standard `(-)` operator is used for subtraction, so `5 - 3` and `(-) 5 3` evaluate to `2`. However,
+the `-` symbol can also be placed in front of a numeric expression to negate it. For instance, `-(5 - 3)`
+evaluates to `-2`. Although this looks like an operator, it's really just part of the Haskell syntax, and
+isn't a true operator as for as the language is concerned. For instance, it isn't something you can rebind.
+It is a unary (single-argument) pseudo-operator, and the only one of its kind in Haskell.
 
 Procedures
 ----------
