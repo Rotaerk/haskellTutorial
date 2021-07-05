@@ -105,8 +105,8 @@ Let Expressions
 ---------------
 
 A **let expression** is an expression that allows you to make a declaration with a scope limited to
-the expression itself. Only some types of declarations are allowed in one, but they include binding
-declarations. Here is an example:
+the expression itself, and then to evaluate another expression in that context. Only some types of
+declarations are allowed in one, but they include binding declarations. Here is an example:
 
 `let x = 1 + 2 in x * x`
 
