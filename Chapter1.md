@@ -51,11 +51,9 @@ Try entering each of the below expressions to see how it responds:
 1. `1.35`
 2. `"Hello"`
 3. `'a'`
-4. `True`
-5. `1 / 3`
-6. `-9 * (1 + 8) `
-7. `'b' == 'c'`
-8. `"Super" ++ "man"`
+4. `1 / 3`
+5. `-9 * (1 + 8) `
+6. `"Super" ++ "man"`
 
 Literals
 --------
@@ -71,9 +69,6 @@ examples of each, which you can enter into GHCi to see its output:
   with Unicode numeric representation 65; equivalent to `'A'`)
 - String Literals: `"Hello World"`, `"\65\65\65"` (equivalent to `"AAA"`), `"Three\nLine\nString"`
 
-**Note:** In the earlier examples of Haskell expressions, we saw some Boolean values, namely `True` and
-`False`. While single-symbol values, these are not literals. We'll cover what these are later.
-
 Variables and Declarations
 --------------------------
 
@@ -87,9 +82,9 @@ variable is called a **binding declaration**, which looks like this:
 
 A binding declaration is just one of many types of **declarations**, or statements that declare
 something to be true. More will be introduced later. Every declaration has a limited context in which
-it is considered true, called its **scope**. The scope of a binding declaration can also be referred to
-as the variable's scope. If a declaration is true (or a variable is bound) in a given context, then
-the declaration or variable are said to be "in scope".
+it is considered true, called its **scope**. In the case of a binding declaration, its scope can also be
+referred to as the variable's scope. If a declaration is considered true (or a variable is bound) in a
+given context, then the declaration or variable is said to be "in scope".
 
 GHCi allows you to enter binding declarations, and they remain in scope for the rest of the GHCi
 session unless you enter another that re-binds the same variable name. Go ahead and try entering
@@ -124,9 +119,8 @@ of that instead of an error.)
 Here are a few more examples to try:
 
 1. `let s = "foo" in s ++ s`
-2. `let n = 5 in n == 5`
-3. `let notUsed = 500 in "Hello"`
-4. `let foo = 1 in let bar = 2 in foo + bar`
+2. `let notUsed = 500 in "Hello"`
+3. `let foo = 1 in let bar = 2 in foo + bar`
 
 That last example works because, *any* valid expression can be placed after the `in`, including other
 let expressions. However, this isn't typically done because you can put multiple declarations in
@@ -134,8 +128,8 @@ one let expression, so it can be rewritten like this:
 
 `let { foo = 1; bar = 1 } in foo + bar`
 
-Note that these declarations are in scope for the *whole* let expression, including the part before
-them. This means that the bound expressions may refer back to the variables themselves, like this:
+Note that these declarations are in scope for the *whole* let expression, including the declarations
+that come before them. This means that the bound expressions may refer back to the variables themselves:
 
 `let { a = b; b = 3 + 1; c = a } in a + c`
 
@@ -190,63 +184,6 @@ Go ahead and try entering those examples into GHCi along with these:
 3. `let g x = x * 2 in g 10 + g 20`
 4. `let h a = a + 1 in h 2 * 10`
 5. `let h a = a + 1 in h (2 * 10)`
-
-### Multiple Arguments
-
-Because functions themselves are values, they can be the results of other functions, like this:
-
-`\x -> \y -> x * y + 1`
-
-Notice that not just `y` but also `x` is in scope for the inner function's result expression.
-This means that we *effectively* have a two-parameter function. This is the typical approach in
-Haskell for writing functions with multiple parameters.
-
-There is syntax sugar for such a lambda that looks like this:
-
-`\x y -> x * y + 1`
-
-Also, the syntax sugar mentioned earlier for binding variables to functions can be extended for this:
-
-`f x y = x * y + 1`
-
-To apply this function to two arguments, you would write this:
-
-`(\x y -> x * y + 1) 5 2`
-
-The way this evaluates is that first, `x = 5` is temporarily brought into scope, and `(\y -> x * y + 1) 2`
-is evaluated:
-
-`let x = 5 in (\y -> x * y + 1) 2`
-
-Next, `y = 2` is temporarily brought into scope, and `x * y + 1` is evaluated:
-
-`let x = 5 in let y = 2 in x * y + 1`
-
-It's worth noting that we can apply the function to just one argument, bind a variable to the resulting
-function, and then supply the second argument later on, or even reuse the function multiple times on
-different arguments. This pattern is known as **partial application**:
-
-`let { f x y = x * y + 1; g = f 5 } in g 2 + g 3`
-
-### Functions as Arguments
-
-Again because functions themselves are values, they can be arguments to other functions, like this:
-
-`(\f -> f 1 + f 2) (\x -> x * 10)`
-
-The way this evaluates is that first, `f = \x -> x * 10` is brought into scope, and `f 1 + f 2` is evaluated:
-
-`let f x = x * 10 in f 1 + f 2`
-
-Then `f` is applied twice, so we have two scopes where `x` is bound, and `x * 10` is evaluated for each:
-
-`let f x = x * 10 in (let x = 1 in x * 10) + (let x = 2 in x * 10)`
-
-At this point, `f` is no longer used on the right side of the `in`, so this is equivalent to:
-
-`(let x = 1 in x * 10) + (let x = 2 in x * 10)`
-
-**Note:** A function whose argument and/or result are another function is called a **higher-order function**.
 
 Modules
 -------
@@ -336,74 +273,60 @@ x = pi
 
 You can also use `pi` from a fresh instance of GHCi without having loaded any modules.
 
-Operators
----------
+Procedures
+----------
 
 ### Introduction
 
-Another type of expression that is used in the same manner as variables is called an **operator**. Like
-variables, operators are bound to expressions. The main differences between the two are syntax-related.
-First, operators are named as a series of non-alphanumeric symbols wrapped in parentheses. For instance,
-we can name an operator `(.+/<)`, such as in this expression:
+So far, the expressions we've talked about include: literals, variables, let-expressions, and functions.
+Variables are expressions serving as names for other expressions. Let-expressions bring declarations into scope,
+but otherwise just evaluate to other expressions. Functions define expressions relative to other expressions.
+So the only expressions we've talked about so far that stand on their own are literals, which include numbers,
+characters, and strings. But Haskell is a *programming language*, not a number, character, and string evaluation
+language. If we're going to build programs, we need some more useful expressions to evaluate.
 
-`let (.+/<) = 2 in (.+/<) + (.+/<)`
+To specify the behavior of our program, we need to be able to describe a sequence of instructions for it to
+execute. Haskell supports a type of expression for doing just that, which I call a **procedure**. This kind of
+expression is officialy called both an "I/O operation" and an "action" by the Haskell Report. However, because
+such an expression can describe anything from the simplest CPU instruction to the most complicated of programs,
+I find both of these terms to undersell the complexity they might encapsulate.
 
-While *allowed*, this is not how operators are generally used. They exist for a special purpose: If they are
-bound to a function with two arguments, they can be used in infix notation after stripping the parentheses.
-For instance:
+There is no special syntax for creating a procedure. Rather, GHC gives us simple procedures bound to variables,
+which serve as the bedrock for programming in Haskell. New procedures are created by chaining together simpler
+ones. We will cover how to chain together procedures later.
 
-`let (-#-) x y = x * y in 2 -#- 3`
+### Hello World
 
-We can also write the binding itself in infix notation:
+A Haskell program is written by creating a module called `Main` (and in this one case, the file name does *not*
+have to match the module name) and binding a top-level variable called `main` to a procedure. When GHC compiles
+the module, it specifically looks for this variable in this module, and it will build a program that, when run,
+executes the procedure it is bound to. Other procedures referenced, directly or indirectly, by the `main`
+procedure may run as a part of it, but `main` serves as the so-called **entry-point**.
 
-`let x -#- y = x * y in 2 -#- 3`
+Let's create our first program, which will print the text "Hello World!" to the command-line interface. We do
+not need to piece together our own procedure for this, because the Prelude has us covered. It provides us a
+function called `putStrLn` that expects a string argument and gives back a procedure that contains the
+instructions for printing that string.
 
-Just remember that this binding is equivalent to `(-#-) = \x y -> x * y`.
+Create a new file in `ch1/` called `HelloWorld.hs`, and write this to it:
 
-The characters that may be used in operator names include these ASCII symbols: `!#$%&*+./<=>?@\^|-~:`.
-We can also use certain Unicode symbols.
+```hs
+module Main where
 
-**Note:** The following cannot be used as operator names due to Haskell reserving them for special purposes:
-`(..)`, `(:)`, `(::)`, `(=)`, `(\)`, `(|)`, `(<-)`, `(->)`, `(@)`, `(~)`, and `(=>)`.
+main = putStrLn "Hello World!"
+```
 
-### Infix Variables
+Then from the command-line, run `ghc HelloWorld` to compile the module. You should get an output like this:
 
-Variables bound to functions that take 2 arguments can also be used in infix notation by wrapping them in
-backticks (`` ` ``) like this:
+```console
+[1 of 1] Compiling Main             ( HelloWorld.hs, HelloWorld.o )
+Linking HelloWorld ...
+```
 
-``let foo x y = x * y in 2 `foo` 3``
+It will have created an executable program alongside your module file. If you run that from the command-line,
+you should see the text "Hello World!" displayed.
 
-And even write the binding itself in infix notation:
-
-``let x `foo` y = x * y in foo 2 3``
-
-### Standard Operators
-
-The Prelude exports many standard operators, some of which we've used in prior examples, including the
-arithmetic operators as well as `(++)`, which was used to contatenate strings. Whenever we wrote `a + b`, we
-could have alternatively written `(+) a b` to apply the operator like a function variable. We can also bind
-a variable to the operator like this:
-
-`let add = (+) in add 1 2`
-
-We can also partially apply the operator like any other function:
-
-`let add3 = (+) 3 in add3 1 + add3 2`
-
-To show that these arithmetic operators are not special syntax, but are just operators bound to expressions,
-you can rebind them in GHCi (not that this is generally recommended):
-
-`let a + b = 500 in 1 + 1`
-
-### Negation
-
-The standard `(-)` operator is used for subtraction, so `5 - 3` and `(-) 5 3` evaluate to `2`. However,
-the `-` symbol can also be placed in front of a numeric expression to negate it. For instance, `-(5 - 3)`
-evaluates to `-2`. Although this looks like an operator, it's really just part of the Haskell syntax, and
-isn't a true operator as for as the language is concerned. For instance, it isn't something you can rebind.
-It is a unary (single-argument) pseudo-operator, and the only one of its kind in Haskell.
-
-Procedures
-----------
+You can also load this module into GHCi, and then enter the command `:main` to run the procedure without
+first compiling.
 
 [Back](README.md) / [Top](README.md) / [Next](Chapter2.md)
