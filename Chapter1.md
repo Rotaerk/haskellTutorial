@@ -8,28 +8,72 @@ In your command-line shell, navigate to the `ch1/` directory.
 Expressions and Evaluation
 ------
 
-Generally speaking, computation is the transformation of information according to a defined process.
-Haskell is a language for describing a certain kind of information and is accompanied by a defined
-process for transforming it. The kind of information described in Haskell is a syntactic arrangement
-of symbols called an **expression**. To use an analogy, an English sentence could be called an
-expression, as it is a series of words (symbols) arranged according to English grammar (syntax).
-But Haskell expressions have their own symbols and grammar, which will be introduced over the course
-of this tutorial.
+### Arithmetic and Algebra Expressions
 
-The process for transforming expressions, called **evaluation**, is the iterative replacement of
-symbols or groups of symbols in the expression, called **sub-expressions**, with other expressions
-by following defined rules. For instance if we have a rule that tells us to replace `a + b`
-with the sum of `a` and `b`, then `1 + 2 + 3` can be evaluated as follows:
+If you're familiar with arithmetic, you've seen arithmetic expressions before. For example:
 
-1. `1 + 2 + 3` - start
-2. `3 + 3` - replace the subexpression `1 + 2` with `3`
-3. `6` - replace `3 + 3` with `6`
+1. `1`
+2. `3.14 + 1.3`
+3. `(15 / 2) + 3 × (1 - 3)`
 
-For some expressions, this process can go on forever unless interrupted. For others, like the above
-example, evaluation eventually reaches a point where it can go no further, and the resulting
-expression is said to be **fully evaluated**. A fully evaluated expression is called a **value**.
-Thus `6` is a value. Also, since evaluation rules are defined such that they always lead to the
-same result, it can be said that `6` is *the* value of `1 + 2 + 3`.
+You're also familiar with the iterative, or step-by-step, process of calculating the value of
+such expressions. For example, to calculate the value of expression #3 above, you might do:
+
+1. `(15 / 2) + 3 × (1 - 3)` : start
+2. `7.5 + 3 × (1 - 3)` : division of 15 and 2
+3. `7.5 + 3 × -2` : subtraction of 1 and 3
+4. `7.5 + -6` : multiplication of 3 and -2
+5. `1.5` : addition of 7.5 and -6
+
+If you're familiar with algebra, you've seen algebraic expressions before. For example:
+
+1. `x`
+2. `a(a + 1) - a + 2`
+3. `(2x + 3y) / x - 2z - y/x - 3`
+
+You're also familiar with the iterative process of simplifying such expressions. For example,
+to simplify expression #3 above, you might do:
+
+1. `(2x + 3y) / x - 2z - y/x - 3` : start
+2. `2x/x + 3y/x - 2z - y/x - 3` : distributive property
+3. `2 + 3y/x - 2z - y/x - 3` : cancel out the `x`s
+4. `3y/x - 2z - y/x - 1` : subtract 2 and 3
+5. `2y/x - 2z - 1` : combine terms containing `y/x`
+
+In both cases, we've got:
+
+1. Grammatical rules that tell us whether something is a valid expression. For instance, `1 +`
+   is not a valid arithmetic expression. `x + y` also isn't, but it *is* a valid algebraic
+   expression. Any arithmetic expression is also a valid algebraic expression. But then
+   `x x` and `x -× 2- y/` are *not* valid algebraic expressions.
+
+2. A set of rules that tell us how to iteratively transform expressions. For instance, we have
+   a rule for arithmetic calculation that tells us in any arithmetic expression, we can replace
+   two numbers separated by an arithmetic operation with the result of that operation like how we
+   replaced `15 / 2` with `7.5` in the above arithmetic calculation. And for algebraic expressions,
+   we have rules like canceling and the distributive property that allow us to eliminate variables,
+   making the expression simpler. The rules of arithmetic calculation also apply in algebraic
+   simplification, so arithmetic can be seen as a special case of algebra.
+
+### Haskell Expressions
+
+A **Haskell expression** is a type of expression that obeys grammar rules defined by the Haskell
+language. Arithmetic expressions are generally valid Haskell expressions, although they might be
+written a bit differently. For instance, multiplication uses the `*` symbol instead of `×`, and
+exponentiation uses `^` instead of writing a superscript. However, Haskell expressions are not
+limited to just numbers. For instance, you can have expressions that operate on strings of
+characters, like `"Hello"`. The rules for what make a valid Haskell expression will be introduced
+over the course of this tutorial.
+
+Haskell also defines rules for iteratively transforming these expressions, called **evaluation**.
+Like arithmetic calculation and algebraic simplification, evaluation rules entail replacing parts
+of the expression, called **sub-expressions**, with other expressions. Unlike with arithmetic
+calculation, there exist Haskell expressions for which the evaluation process can go on forever
+because there's always a sub-expression replacement that can be done according to the rules. For
+others, evaluation eventually reaches a point where it can go no further, and the resulting
+expression is said to be **fully evaluated**. This is analogous to how `1.5` is a "fully calculated"
+arithmetic expression, and `2y/x - 2z - 1` is a "fully simplified" algebraic expression. A fully
+evaluated Haskell expression is called a **value**.
 
 Let's play with some simple Haskell expressions. We'll use GHCi, a tool that comes with GHC for
 working with Haskell interactively. In your command-line shell, run `ghci`. It should present you
@@ -54,6 +98,8 @@ Try entering each of the below expressions to see how it responds:
 4. `1 / 3`
 5. `-9 * (1 + 8) `
 6. `"Super" ++ "man"`
+
+**Note:** For the rest of this tutorial, Haskell expressions will simply be called "expressions".
 
 Literals
 --------
@@ -81,16 +127,19 @@ variable is called a **binding declaration**, which looks like this:
 `num = 1 + 2`
 
 A binding declaration is just one of many types of **declarations**, or statements that declare
-something to be true. More will be introduced later. Every declaration has a limited context in which
-it is considered true, called its **scope**. In the case of a binding declaration, its scope can also be
-referred to as the variable's scope. If a declaration is considered true (or a variable is bound) in a
-given context, then the declaration or variable is said to be "in scope".
+something to be true. More will be introduced later. It is important to note that although they
+are part of Haskell, declarations are *not* expressions and are *not* evaluated.
+
+Every declaration has a limited context in which it is considered true, called its **scope**. In
+the case of a binding declaration, its scope can also be referred to as the variable's scope. If
+a declaration is considered true (or a variable is bound) in a given context, then the declaration
+or variable is said to be "in scope".
 
 GHCi allows you to enter binding declarations, and they remain in scope for the rest of the GHCi
 session unless you enter another that re-binds the same variable name. Go ahead and try entering
-the above example. Notice that GHCi doesn't reply back to you. This is because declarations are not
-expressions and cannot be evaluated. Once you've entered that binding, enter the expression `num`
-and note the result.
+the above example. Notice that GHCi doesn't reply back to you. This is because, again, declarations
+are not expressions and cannot be evaluated. Once you've entered that binding, enter the expression
+`num` and note the result.
 
 Variable names must start with a *lowercase* letter or an underscore (`_`), while the remaining
 characters may be letters (including uppercase), digits, apostrophes (`'`), and underscores. Within
@@ -122,7 +171,7 @@ Here are a few more examples to try:
 2. `let notUsed = 500 in "Hello"`
 3. `let foo = 1 in let bar = 2 in foo + bar`
 
-That last example works because, *any* valid expression can be placed after the `in`, including other
+That last example works because *any* valid expression can be placed after the `in`, including other
 let expressions. However, this isn't typically done because you can put multiple declarations in
 one let expression, so it can be rewritten like this:
 
