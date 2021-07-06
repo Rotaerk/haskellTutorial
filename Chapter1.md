@@ -3,7 +3,8 @@
 Chapter 1 - Hello World
 =======================
 
-In your command-line shell, navigate to the `ch1/` directory.
+In a command-line shell, create a new folder for the code you will write in this chapter, and
+then navigate into it. Below, this folder will be referred to as `ch1/`.
 
 Expressions and Evaluation
 ------

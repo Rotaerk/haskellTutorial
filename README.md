@@ -1,23 +1,30 @@
 Haskell Tutorial
 ================
 
-To follow this tutorial, it is recommended that you copy this repository to your machine first. To do so,
-first install [Git](https://git-scm.com/downloads).  Then open a command-line shell, navigate to where you would
-like the repository's directory to be created, and run the following command:
+Offline Reading
+---------------
+
+You can read this tutorial directly on GitHub if you would like, but if you want to read it offline, here's how:
+
+First, copy this repository to your machine. To do so, first install [Git](https://git-scm.com/downloads).  Then
+open a command-line shell, navigate to where you would like the repository's directory to be created, and run the
+following command:
 
 ```console
 git clone https://github.com/Rotaerk/haskellTutorial 
 ```
 
-This will create a new folder called `haskellTutorial`. Throughout the tutorial, any relative file paths I specify
-should be interpreted as relative to this folder unless otherwise specified.
+This will create a new folder for the repository called `haskellTutorial`. If any updates to the tutorial are made,
+you can update your local copy by running this from the command-line within that repository folder:
 
-You can read this tutorial directly on GitHub if you would like, but if you want to read it from your local clone
-of the repository, you will need a tool that renders Markdown.
+```console
+git pull
+```
 
-One option is to use [Visual Studio Code](https://code.visualstudio.com/), suggested below for writing
-Haskell code. It supports displaying a preview of Markdown files, so you can read the tutorial and write code
-all in the same place.
+Second, you will need a tool that renders Markdown, the format this tutorial is written in.
+
+One option is to use [Visual Studio Code](https://code.visualstudio.com/), suggested below for writing Haskell code.
+It supports displaying a preview of Markdown files, so you can read the tutorial and write code all in the same place.
 
 Another option is to use the Python utility called Grip. A benefit of this tool is that it renders Markdown exactly
 as GitHub does, so I used it to preview my changes while writing this tutorial. If you would like to use it,
