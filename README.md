@@ -36,8 +36,8 @@ URL, which you can open in a web browser to view the rendered Markdown.
 Tool Installation
 -----------------
 
-It is recommended that you actually write, compile, and run the provided haskell code as you work through the
-tutorial. To do this, you will need the following tools:
+It is recommended that you actually write, compile, and run the provided haskell code as instructed throughout
+the tutorial. To do this, you will need the following tools:
 
 1. A text editor, preferably one with syntax highlighting support for Haskell code. If you need a suggestion,
    try [Visual Studio Code](https://code.visualstudio.com/).
