@@ -122,8 +122,12 @@ Variables and Declarations
 **Variables** are another kind of single-symbol expression, only these are defined by the programmer,
 and they exist to represent *another* expression. A variable is defined through a mechanism called
 **binding**, which entails specifying a name for it along with the expression it should stand for.
-Evaluation of any variable entails evaluating the expression it is bound to.  One way to bind a
-variable is called a **binding declaration**, which looks like this:
+
+Evaluation of any variable entails evaluating the expression it is bound to. The expression that
+a variable is bound to is only ever evaluated *once*, even if the variable is referenced multiple
+times by other expressions.
+
+One way to bind a variable is called a **binding declaration**, which looks like this:
 
 `num = 1 + 2`
 
@@ -154,38 +158,76 @@ purposes: `case`, `class`, `data`, `default`, `deriving`, `do`, `else`, `foreign
 Let Expressions
 ---------------
 
-A **let expression** is an expression that allows you to make a declaration with a scope limited to
-the expression itself, and then to evaluate another expression in that context. Only some types of
-declarations are allowed in one, but they include binding declarations. Here is an example:
+### Introduction
 
-`let x = 1 + 2 in x * x`
+A **let expression** is an expression that allows you to make a binding declaration with a scope
+limited to the expression itself, and then to evaluate another expression in that context. Some other
+types of declarations are supported in a let expression as well, but they only supplement the binding.
+Thus, sometimes a let expression is called a "let binding".
+
+Here are some examples:
+
+1. `let notUsed = 500 in "Hello"`
+2. `let s = "foo" in s ++ s`
+3. `let x = 1 + 2 in x * x`
 
 Evaluating a let expression entails temporarily bringing the declaration into scope, and then
-evaluating the expression after the `in`. Try it out by entering it into GHCi. Also note that
-afterwards, if you simply enter `x`, it will give you an error, because of `x`'s limited scope.
-(If you previously entered a binding for `x` outside of a let expression, you will get the result
+evaluating the expression after the `in`. Also remember that a bound expression is only evaluated
+once. So here is what evaluating expression #3 above looks like:
+
+1. `let x = 1 + 2 in x * x` : start
+2. `let x = 3 in x * x` : evaluate bound expression
+3. `let x = 3 in 3 * 3` : replace `x` with its value
+4. `3 * 3` : eliminate unused binding
+5. `9` : arithmetic
+
+Try out those let expressions by entering them into GHCi. Also note that afterwards, if you enter one of the
+variable names that was bound in a let expression, you will get an error because it is no longer in scope.
+(Although, if you previously entered a binding for it outside of a let expression, you will get the result
 of that instead of an error.)
 
-Here are a few more examples to try:
+### Laziness
 
-1. `let s = "foo" in s ++ s`
-2. `let notUsed = 500 in "Hello"`
-3. `let foo = 1 in let bar = 2 in foo + bar`
+At this point it is worth mentioning that Haskell's evaluation process is **lazy** by default. This means
+it will not evaluate an expression that it does not need to. For instance, here is how a let expression that
+does not use its binding is evaluated:
 
-That last example works because *any* valid expression can be placed after the `in`, including other
-let expressions. However, this isn't typically done because you can put multiple declarations in
-one let expression, so it can be rewritten like this:
+1. `let x = 1 + 2 in 5 + 6` : start
+2. `5 + 6` : eliminate unused binding
+3. `11` : arithmetic
+
+The sub-expression `1 + 2` is never evaluated to `3` because it was not needed for evaluating the
+expression as a whole.
+
+### Multiple Bindings
+
+Because *any* valid expression can be placed after the `in` of a let expression, this includes other
+let expressions. Here is an example for you to try in GHCi:
+
+`let foo = 3 * 4 in let bar = 2 * 3 in foo + bar`
+
+It would be evaluated like:
+
+1. `let foo = 3 * 4 in let bar = 2 * 3 in foo + bar` : start
+2. `let foo = 12 in let bar = 2 * 3 in foo + bar` : evaluate bound expression
+3. `let foo = 12 in let bar = 2 * 3 in 12 + bar` : replace `foo` with its value
+4. `let bar = 2 * 3 in 12 + bar` : eliminate unused binding
+5. `let bar = 6 in 12 + bar` : evaluate bound expression
+6. `let bar = 6 in 12 + 6` : replace `bar` with its value
+7. `12 + 6` : eliminate unused binding
+8. `18` : arithmetic
+
+However, this isn't typically done because you can put multiple declarations in one let expression, so it
+can be rewritten like this:
 
 `let { foo = 1; bar = 1 } in foo + bar`
 
-Note that these declarations are in scope for the *whole* let expression, including the declarations
-that come before them. This means that the bound expressions may refer back to the variables themselves:
+There is a subtle difference between the two: When `bar` was bound in a nested let expression, `foo` was
+unable to refer to `bar` because it wasn't in scope yet. However, in this case, both `foo` and `bar` are
+bound in the same let expression, and are thus both in scope at the same time. This means that `foo`'s
+expression can refer to `bar`, and vice versa. Here is an example demonstrating this:
 
 `let { a = b; b = 3 + 1; c = a } in a + c`
-
-**Note:** Bindings are the main type of declaration used in let expressions. The other kinds of
-declarations that let expressions support must accompany a binding. Thus, let expressions are also
-referred to as "let bindings".
 
 Functions
 ---------
@@ -208,24 +250,24 @@ the `->`, and this scope is *per* function application.
 ### Application
 
 To apply a function, you simply put the argument after the function, separated by whitespace. However,
-lambda syntax is greedy and assumes that all the symbols after the `->` are part of it, so `\x -> x + x 5`
+lambda syntax is greedy and assumes that all the symbols after the `->` are part of it, so `\x -> x + x (1 + 4)`
 will not work. To resolve this you can wrap the lambda in parentheses:
 
-`(\x -> x + x) 5`
+`(\x -> x + x) (1 + 4)`
 
-This function application is an expression that temporarily brings `x = 5` into scope and then evaluates
+This function application is an expression that temporarily brings `x = 1 + 4` into scope and then evaluates
 `x + x`. In other words, it is equivalent to the following:
 
-`let x = 5 in x + x`
+`let x = 1 + 4 in x + x`
 
 Another way to apply a function is to bind a variable to it and apply that, so this can be rewritten as:
 
-`let f = \x -> x + x in f 5`
+`let f = \x -> x + x in f (1 + 4)`
 
 When binding a variable to a function, there is a simpler alternative syntax (also known as "syntax sugar")
 that allows you to rewrite the above expression as:
 
-`let f x = x + x in f 5`
+`let f x = x + x in f (1 + 4)`
 
 Go ahead and try entering those examples into GHCi along with these:
 
@@ -234,6 +276,9 @@ Go ahead and try entering those examples into GHCi along with these:
 3. `let g x = x * 2 in g 10 + g 20`
 4. `let h a = a + 1 in h 2 * 10`
 5. `let h a = a + 1 in h (2 * 10)`
+
+Note the difference between the last two examples. Function application has higher "precedence" than any other
+operation, so example #4's subexpression is equivalent to `(h 2) * 10`.
 
 Modules
 -------
