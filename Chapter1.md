@@ -116,8 +116,8 @@ examples of each, which you can enter into GHCi to see its output:
   with Unicode numeric representation 65; equivalent to `'A'`)
 - String Literals: `"Hello World"`, `"\65\65\65"` (equivalent to `"AAA"`), `"Three\nLine\nString"`
 
-Variables and Declarations
---------------------------
+Variables
+---------
 
 **Variables** are another kind of single-symbol expression, only these are defined by the programmer,
 and they exist to represent *another* expression. A variable is defined through a mechanism called
@@ -131,20 +131,13 @@ One way to bind a variable is called a **binding declaration**, which looks like
 
 `num = 1 + 2`
 
-A binding declaration is just one of many types of **declarations**, or statements that declare
-something to be true. More will be introduced later. It is important to note that although they
-are part of Haskell, declarations are *not* expressions and are *not* evaluated.
+GHCi allows you to enter binding declarations, so try entering that example. Notice that GHCi doesn't
+reply back to you. This is because binding declarations are not expressions and cannot be evaluated.
+Once you've entered that binding, enter the expression `num` and note the result.
 
-Every declaration has a limited context in which it is considered true, called its **scope**. In
-the case of a binding declaration, its scope can also be referred to as the variable's scope. If
-a declaration is considered true (or a variable is bound) in a given context, then the declaration
-or variable is said to be "in scope".
-
-GHCi allows you to enter binding declarations, and they remain in scope for the rest of the GHCi
-session unless you enter another that re-binds the same variable name. Go ahead and try entering
-the above example. Notice that GHCi doesn't reply back to you. This is because, again, declarations
-are not expressions and cannot be evaluated. Once you've entered that binding, enter the expression
-`num` and note the result.
+At this point it is worth mentioning that Haskell's evaluation process is **lazy** by default. This means
+it will not evaluate an expression that it does not need to. For instance, the expression `1 + 2` that
+was bound to `num` was not evaluated until you prompted GHCi for its value by entering `num`.
 
 Variable names must start with a *lowercase* letter or an underscore (`_`), while the remaining
 characters may be letters (including uppercase), digits, apostrophes (`'`), and underscores. Within
@@ -155,15 +148,53 @@ purposes: `case`, `class`, `data`, `default`, `deriving`, `do`, `else`, `foreign
 `in`, `infix`, `infixl`, `infixr`, `instance`, `let`, `module`, `newtype`, `of`, `then`, `type`,
 `where`, `_`.
 
+Declarations
+------------
+
+A binding declaration is just one of many types of **declarations**, or statements that declare
+something to be true. More will be introduced later, but like binding declarations, none are expressions
+and are not evaluated.
+
+Every declaration has a limited context in which it is considered true, called its **scope**. In the case
+of a binding declaration, its scope can also be referred to as the variable's scope. If a declaration is
+considered true (or a variable is bound) in a given context, then the declaration or variable is said to
+be "in scope".
+
+Scopes can be nested within one another. An inner scope automatically inherits all of the outer scope's
+declarations, but it can also contain declarations of its own. In GHCi, every time you enter a new
+declaration, it creates a new scope nested inside the prior scope, and lasting for the rest of the GHCi
+session.
+
+The declarations inside nested scopes may even contradict one inherited from an outer scope. This is known
+as **shadowing**. For instance, if you enter `x = 1` and then `x = 2`, you aren't modifying `x`. Rather,
+you have bound a new variable with the same name that shadows the one from the outer scope. If that nested
+scope were ever to end (which it won't in GHCi but could in Haskell in general), then the outer scope's
+declarations would no longer be shadowed, and `x` would evaluate to `1` again. In Haskell, once a variable
+is bound, it cannot be changed. The only thing "variable" about a variable is the fact that its name can be
+bound to different expressions in different scopes.
+
+Also, while a nested scope can shadow a containing scope, a given scope cannot contain repeating or
+contradicting declarations of its own. This can be seen in GHCi by utilizing its support for entering
+more than one declaration together by separating them with a semicolon, like in these examples:
+
+1. `a = 2; b = 3` : okay
+2. `x = 5; x = 6` : error
+3. `x = 1; x = 1` : error
+
+All the declarations entered together share the same scope, so they cannot repeat or contradict one another,
+which is why those last two examples produce errors. However, a benefit of sharing the same scope is that
+they can all refer to each other, regardless of the order they're specified in, for instance:
+
+`a = b; b = 3 + 1; c = a`
+
 Let Expressions
 ---------------
 
 ### Introduction
 
-A **let expression** is an expression that allows you to make a binding declaration with a scope
-limited to the expression itself, and then to evaluate another expression in that context. Some other
-types of declarations are supported in a let expression as well, but they only supplement the binding.
-Thus, sometimes a let expression is called a "let binding".
+A **let expression** is an expression that creates a new scope containing a set of binding declarations, and
+then evaluates another expression in that context. Some other types of declarations are supported as well, but
+they only supplement the binding, so sometimes a let expression is called a "let binding".
 
 Here are some examples:
 
@@ -171,9 +202,9 @@ Here are some examples:
 2. `let s = "foo" in s ++ s`
 3. `let x = 1 + 2 in x * x`
 
-Evaluating a let expression entails temporarily bringing the declaration into scope, and then
-evaluating the expression after the `in`. Also remember that a bound expression is only evaluated
-once. So here is what evaluating expression #3 above looks like:
+Evaluating a let expression entails temporarily bringing the declarations into scope, and then evaluating the
+expression after the `in`. Also remember that a bound expression is only evaluated once. So here is what
+evaluating expression #3 above looks like:
 
 1. `let x = 1 + 2 in x * x` : start
 2. `let x = 3 in x * x` : evaluate bound expression
@@ -183,21 +214,8 @@ once. So here is what evaluating expression #3 above looks like:
 
 Try out those let expressions by entering them into GHCi. Also note that afterwards, if you enter one of the
 variable names that was bound in a let expression, you will get an error because it is no longer in scope.
-(Although, if you previously entered a binding for it outside of a let expression, you will get the result
-of that instead of an error.)
-
-### Laziness
-
-At this point it is worth mentioning that Haskell's evaluation process is **lazy** by default. This means
-it will not evaluate an expression that it does not need to. For instance, here is how a let expression that
-does not use its binding is evaluated:
-
-1. `let x = 1 + 2 in 5 + 6` : start
-2. `5 + 6` : eliminate unused binding
-3. `11` : arithmetic
-
-The sub-expression `1 + 2` is never evaluated to `3` because it was not needed for evaluating the
-expression as a whole.
+(Although, if the let expression was shadowing a previous binding, you will get the result of that instead
+of an error.)
 
 ### Multiple Bindings
 
@@ -222,12 +240,15 @@ can be rewritten like this:
 
 `let { foo = 1; bar = 1 } in foo + bar`
 
-There is a subtle difference between the two: When `bar` was bound in a nested let expression, `foo` was
-unable to refer to `bar` because it wasn't in scope yet. However, in this case, both `foo` and `bar` are
-bound in the same let expression, and are thus both in scope at the same time. This means that `foo`'s
-expression can refer to `bar`, and vice versa. Here is an example demonstrating this:
+The difference between the two is that a nested let expression creates a nested scope, but a single let
+expression with multiple bindings is just one scope. Thus, a nested let expression may shadow the outer
+one like this:
 
-`let { a = b; b = 3 + 1; c = a } in a + c`
+`let foo = 1 in let foo = 2 in foo`
+
+And when multiple declarations are made in the same let expression, the same rules apply as described
+earlier: They may not repeat or contradict one another, but they may refer to each other regardless of
+order.
 
 Functions
 ---------
