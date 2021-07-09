@@ -147,8 +147,8 @@ purposes: `case`, `class`, `data`, `default`, `deriving`, `do`, `else`, `foreign
 `in`, `infix`, `infixl`, `infixr`, `instance`, `let`, `module`, `newtype`, `of`, `then`, `type`,
 `where`, `_`.
 
-Declarations
-------------
+Declarations and Scope
+----------------------
 
 A binding declaration is just one of many types of **declarations**, or statements that declare
 something to be true. More will be introduced later, but like binding declarations, none are expressions
@@ -174,29 +174,29 @@ bound to different expressions in different scopes.
 
 Also, while a nested scope can shadow a containing scope, a given scope cannot contain repeating or
 contradicting declarations of its own. This can be seen in GHCi by utilizing its support for entering
-more than one declaration together by separating them with a semicolon, like in these examples:
+more than one declaration together under the same scope by separating them with a semicolon, like in
+these examples:
 
 1. `a = 2; b = 3` : okay
 2. `x = 5; x = 6` : error
 3. `x = 1; x = 1` : error
 
-All the declarations entered together share the same scope, so they cannot repeat or contradict one another,
-which is why those last two examples produce errors. However, a benefit of sharing the same scope is that
-they can all refer to each other, regardless of the order they're specified in, for instance:
+Because `x` is bound twice in each of the last two examples, this amounts to either contradiction or
+repetition, and thus isn't allowed. However, a benefit of sharing the same scope is that the bound expressions
+can refer to all the variables, regardless of the order they're specified in, for instance:
 
 `a = b; b = 4; c = a`
 
-If you previously entered example #1 above, `b` was bound to `3` already. In *this* example, even though
-`a = b` comes before `b = 4`, it is referring to the `b` in its own scope, not the shadowed one, so `a`
-evaluates to `4`.
+If you entered the previous examples, `b` is bound to `3` already. However, in *this* example, `a = b` is
+referring to the `b` bound in its own scope, even though it comes later, so `a` evaluates to `4`.
 
 Let Expressions
 ---------------
 
 ### Introduction
 
-A **let expression** is an expression that creates a new scope containing a set of binding declarations, and
-then evaluates another expression in that context. Some other types of declarations are supported as well, but
+A **let expression** is an expression that serves as a temporary scope for a set of binding declarations, and
+evaluates another expression in that context. Some other types of declarations are supported as well, but
 they only supplement the binding, so sometimes a let expression is called a "let binding".
 
 Here are some examples for you to try entering into GHCi:
