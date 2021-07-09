@@ -122,10 +122,7 @@ Variables
 **Variables** are another kind of single-symbol expression, only these are defined by the programmer,
 and they exist to represent *another* expression. A variable is defined through a mechanism called
 **binding**, which entails specifying a name for it along with the expression it should stand for.
-
-Evaluation of any variable entails evaluating the expression it is bound to. The expression that
-a variable is bound to is only ever evaluated *once*, even if the variable is referenced multiple
-times by other expressions.
+Evaluation of any variable entails evaluating the expression it is bound to.
 
 One way to bind a variable is called a **binding declaration**, which looks like this:
 
@@ -137,7 +134,9 @@ Once you've entered that binding, enter the expression `num` and note the result
 
 At this point it is worth mentioning that Haskell's evaluation process is **lazy** by default. This means
 it will not evaluate an expression that it does not need to. For instance, the expression `1 + 2` that
-was bound to `num` was not evaluated until you prompted GHCi for its value by entering `num`.
+was bound to `num` was not evaluated until you prompted GHCi for its value by entering `num`. However,
+*if* the variable is evaluated, its value will be stored in memory so that it can be reused, avoiding the
+need to ever re-evaluate it. This property of variables is called **sharing**.
 
 Variable names must start with a *lowercase* letter or an underscore (`_`), while the remaining
 characters may be letters (including uppercase), digits, apostrophes (`'`), and underscores. Within
@@ -162,7 +161,7 @@ be "in scope".
 
 Scopes can be nested within one another. An inner scope automatically inherits all of the outer scope's
 declarations, but it can also contain declarations of its own. In GHCi, every time you enter a new
-declaration, it creates a new scope nested inside the prior scope, and lasting for the rest of the GHCi
+declaration, it creates a new scope nested inside the prior scope that lasts for the rest of the GHCi
 session.
 
 The declarations inside nested scopes may even contradict one inherited from an outer scope. This is known
@@ -170,7 +169,7 @@ as **shadowing**. For instance, if you enter `x = 1` and then `x = 2`, you aren'
 you have bound a new variable with the same name that shadows the one from the outer scope. If that nested
 scope were ever to end (which it won't in GHCi but could in Haskell in general), then the outer scope's
 declarations would no longer be shadowed, and `x` would evaluate to `1` again. In Haskell, once a variable
-is bound, it cannot be changed. The only thing "variable" about a variable is the fact that its name can be
+is bound, it cannot be changed. The only thing "variable" about a variable is the fact that it might be
 bound to different expressions in different scopes.
 
 Also, while a nested scope can shadow a containing scope, a given scope cannot contain repeating or
@@ -185,7 +184,11 @@ All the declarations entered together share the same scope, so they cannot repea
 which is why those last two examples produce errors. However, a benefit of sharing the same scope is that
 they can all refer to each other, regardless of the order they're specified in, for instance:
 
-`a = b; b = 3 + 1; c = a`
+`a = b; b = 4; c = a`
+
+If you previously entered example #1 above, `b` was bound to `3` already. In *this* example, even though
+`a = b` comes before `b = 4`, it is referring to the `b` in its own scope, not the shadowed one, so `a`
+evaluates to `4`.
 
 Let Expressions
 ---------------
@@ -196,7 +199,7 @@ A **let expression** is an expression that creates a new scope containing a set 
 then evaluates another expression in that context. Some other types of declarations are supported as well, but
 they only supplement the binding, so sometimes a let expression is called a "let binding".
 
-Here are some examples:
+Here are some examples for you to try entering into GHCi:
 
 1. `let notUsed = 500 in "Hello"`
 2. `let s = "foo" in s ++ s`
@@ -211,11 +214,6 @@ evaluating expression #3 above looks like:
 3. `let x = 3 in 3 * 3` : replace `x` with its value
 4. `3 * 3` : eliminate unused binding
 5. `9` : arithmetic
-
-Try out those let expressions by entering them into GHCi. Also note that afterwards, if you enter one of the
-variable names that was bound in a let expression, you will get an error because it is no longer in scope.
-(Although, if the let expression was shadowing a previous binding, you will get the result of that instead
-of an error.)
 
 ### Multiple Bindings
 
