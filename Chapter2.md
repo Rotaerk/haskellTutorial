@@ -1,7 +1,56 @@
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)
 
-Chapter 2 - **WORK IN PROGRESS**
-==================
+Chapter 2 - Imperative Programming
+==================================
+
+In a command-line shell, create a new folder for the code you will write in this chapter, and
+then navigate into it. Below, this folder will be referred to as `ch2/`.
+
+Tuples
+------
+
+### Introduction
+
+A **tuple** is a type of expression that contains two or more other expressions. Here are some examples:
+
+1. `(1, 2)`
+2. `("Hello", 3.5, 'x', \a -> a + 1)` : won't display in GHCi because it contains a function
+3. `(2+2, "Hi " ++ "there!", let a = 3 in a * a)`
+
+Evaluating a tuple entails evaluating the expressions it contains while keeping its structure intact.
+The tuple is fully evaluated if all of its expressions are fully evaluated. So for instance, examples #1
+and #2 are values, while #3 can still be evaluated.
+
+### Pattern-matching
+
+Binding declarations are actually more versatile than was demonstrated in Chapter 1. Rather than binding
+variables to expressions, they actually bind **patterns** to expressions, and variables happen to be the
+simplest pattern. A pattern describes a structure or shape expected from the bound expression while
+allowing names to be given to pieces of that structure. A variable is simply a pattern that imposes no
+structural constraints on the expression.
+
+Here is an example of a **tuple pattern** bound to a tuple expression:
+
+`let (a, b) = (1 + 1, 2 * 2) in a + b`
+
+A tuple pattern looks very much like a tuple expression; after all, if `a` and `b` were in scope, `(a, b)`
+would be a valid tuple expression. However, the placement within the binding syntax on the left side of
+the `=` tells us that it is a pattern.
+
+By placing variable names within the slots of the tuple pattern, we are saying that they should be bound
+to the expressions in the corresponding slots of the bound expression. Particularly, `a` is bound to
+`1 + 1` and `b` to `2 * 2`.
+
+### Multi-Parameter Functions
+
+Just as the left side of a binding declaration is a pattern, so is the parameter of a function.
+Here are some examples of functions being applied to tuples:
+
+1. `(\(x,y) -> x + y) (1,2)`
+2. `let f (x, y) = x * y in f (3, 4)`
+
+Thus, by packing multiple expressions into a tuple and applying a function to that, which uses pattern
+matching to unpack the expressions, we effectively have a multi-parameter function.
 
 Higher-Order Functions
 ----------------------
@@ -11,10 +60,21 @@ Higher-Order Functions
 In Chapter 1, we covered functions and showed that they define an expression in terms of a parameter, or
 a variable waiting to be bound to an argument (another expression) when the function is applied. Because
 a function is, itself, an expression, it can be an argument to another function, as well as the expression
-built by another function. Any function that builds another function as its result or takes another function
-as an argument is called a **higher-order function**.
+built by another function. Any function that takes another function as an argument or builds another function
+as its result is called a **higher-order function**.
 
-### Multiple Arguments
+### Functions as Arguments
+
+Here's what it looks like for a function to serve as an argument, and how it evaluates:
+
+1. `(\f -> f 1 + f 2) (\x -> x * 10)` : start
+2. `let f x = x * 10 in f 1 + f 2` : bind parameter to argument
+3. `let f x = x * 10 in (\x -> x * 10) 1 + (\x -> x * 10) 2` : replace `f` with its value
+4. `(\x -> x * 10) 1 + (\x -> x * 10) 2` : eliminate unused binding
+5. `(1 * 10) + (2 * 10)` : function application x2
+6. `30` : arithmetic
+
+### Functions Building Functions
 
 Here is an example of a function that builds another function:
 
@@ -55,13 +115,26 @@ Also, the syntax sugar mentioned earlier for binding variables to functions can 
 
 `f a b c d e = a + b + c + d + e`
 
+### Currying
+
+This form of multi-parameter function is called a **curried** function, while one that simply takes a
+tuple is called an "uncurried" function. Any curried function can be expressed as an uncurried function
+and vice versa. For example, `\x y -> x + y` is the curried form of `\(x,y) -> x + y`. The process of
+converting an uncurried function to its curried form is called "currying", while the reverse is called
+"uncurrying".
+
+The Prelude actually provides a couple functions to do this conversion for you, for 2-parameter functions,
+called `curry` and `uncurry`. Here are some examples of them being used:
+
+1. `let { f (x, y) = x + y; g = curry f } in g 1 2`
+2. `let { f x y = x + y; g = uncurry f } in g (1, 2)`
+
 ### Partial Application
 
-We already did it once in the very first example of a multi-parameter function, but this deserves special
-attention: We can apply a multi-parameter function to a portion of its arguments, bind a variable to the
-resulting function, and then supply further arguments to that variable later on, or even reuse it multiple
-times on different arguments. This usage is known as **partial application**. For example, here's how
-it looks and evaluates:
+Curried functions are the most common in Haskell because they have a big advantage over uncurried functions:
+We can apply a curried function to a portion of its arguments, bind a variable to the resulting function,
+and then supply further arguments to that variable later on, or even reuse it multiple times on different
+arguments. This usage is known as **partial application**. For example, here's how it looks and evaluates:
 
 1. `let { f x y = x * y + 1; g = f 5 } in g 2 + g 3` : start
 2. `let { f x y = x * y + 1; g = (\x y -> x * y + 1) 5 } in g 2 + g 3` : replace `f` with its value
@@ -72,20 +145,8 @@ it looks and evaluates:
 7. `(5 * 2 + 1) + (5 * 3 + 1)` : function application x2 (skipped some steps)
 8. `27` : arithmetic
 
-### Functions as Arguments
-
-As mentioned earlier, functions may also consume other functions as arguments. Here's what that looks like
-and how it evaluates:
-
-1. `(\f -> f 1 + f 2) (\x -> x * 10)` : start
-2. `let f x = x * 10 in f 1 + f 2` : bind parameter to argument
-3. `let f x = x * 10 in (\x -> x * 10) 1 + (\x -> x * 10) 2` : replace `f` with its value
-4. `(\x -> x * 10) 1 + (\x -> x * 10) 2` : eliminate unused binding
-5. `(1 * 10) + (2 * 10)` : function application x2
-6. `30` : arithmetic
-
-Operators
----------
+Operators and Infix Notation
+----------------------------
 
 ### Introduction
 
@@ -195,5 +256,64 @@ Due to `(.+.)` having higher precedence than `(-#-)`, that expression is evaluat
 Whenever two operators have the same precedence *and* the same associativity, they will be evaluated in
 the order of the associativity. If they have the same precedence but *not* the same associativity, they
 aren't allowed to be chained, and parentheses are required.
+
+Procedure Composition
+---------------------
+
+### Output-Only
+
+The Prelude provides some functions for composing procedures. The simplest is called `(>>)`, which you can
+pronounce as "then". In `ch2/`, create a new file called "Main.hs" containing:
+
+```hs
+module Main where
+
+main = putStrLn "Line 1" >> putStrLn "Line 2" >> putStrLn "Line 3"
+```
+
+Compile it with `ghc Main`, and then run the resulting program. You should see the following output:
+
+```console
+Line 1
+Line 2
+Line 3
+```
+
+The `(>>)` operator takes two procedures and builds a new one that, *if* executed, will execute its first
+argument followed by its second argument. It's associative, because the same sequence of execution happens
+in both `a >> (b >> c)` and `(a >> b) >> c`, so it can be unambiguously chained.
+
+### Input
+
+The only procedures we've seen so far output text, but what if we want to get input back from the user?
+While not obvious with `putStrLn`, procedures always have execution results. In the case of `putStrLn`,
+its execution result is always a special value called `()`, pronounced "unit". This is a useful value
+for when a procedure must return *something* but has nothing useful to return.
+
+An example of a procedure that does return something useful is `getLine`, provided by the Prelude. If this
+procedure is executed, it will prompt the user to enter a line of text, and then its result will be that
+text. But how do we get access to this?
+
+Let's say we want to make a procedure that will ask the user for a line of text and then immediately display
+it back to them (often called "echoing"). Remember that `putStrLn` is not, itself, a procedure, but a function
+that builds a procedure given a string. Procedures don't take parameters. The string to be displayed is built
+in to the procedure returned by a particular application of `putStrLn`. Thus, how an echo procedure must work
+is:
+
+1. Run `getLine`, and get its result. Let's call this `line`.
+2. Apply `putStrLn` to `line` to build a new procedure that displays `line`
+3. Run this new `line`-displaying procedure.
+
+This is precisely what the Prelude-provided operator called `(>>=)` does. This can be pronounced "bind".
+Its first argument is a procedure. Its second argument is a function that builds a procedure. The way it
+works is that it will run the first procedure, apply the provided function to the execution result of that
+first procedure, and then run the procedure built by that function. Go ahead and edit Main.hs to look like
+the following, and then compile and run it:
+
+```hs
+module Main where
+
+main = getLine >>= \line -> putStrLn line
+```
 
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)
