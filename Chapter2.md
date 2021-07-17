@@ -1,6 +1,6 @@
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)
 
-Chapter 2 - Imperative Programming
+Chapter 2 - Procedural Programming
 ==================================
 
 In a command-line shell, create a new folder for the code you will write in this chapter, and
@@ -21,7 +21,7 @@ Evaluating a tuple entails evaluating the expressions it contains while keeping 
 The tuple is fully evaluated if all of its expressions are fully evaluated. So for instance, examples #1
 and #2 are values, while #3 can still be evaluated.
 
-### Pattern-matching
+### Tuple Patterns
 
 Binding declarations are actually more versatile than was demonstrated in Chapter 1. Rather than binding
 variables to expressions, they actually bind **patterns** to expressions, and variables happen to be the
@@ -123,11 +123,13 @@ and vice versa. For example, `\x y -> x + y` is the curried form of `\(x,y) -> x
 converting an uncurried function to its curried form is called "currying", while the reverse is called
 "uncurrying".
 
-The Prelude actually provides a couple functions to do this conversion for you, for 2-parameter functions,
+The Prelude actually provides a couple functions to do this conversion for you for 2-parameter functions,
 called `curry` and `uncurry`. Here are some examples of them being used:
 
 1. `let { f (x, y) = x + y; g = curry f } in g 1 2`
 2. `let { f x y = x + y; g = uncurry f } in g (1, 2)`
+
+Notice that both `curry` and `uncurry` take a function as an argument and build a function as a result.
 
 ### Partial Application
 
@@ -158,8 +160,8 @@ we can name an operator `(.+/<)`, such as in this expression:
 `let (.+/<) = 2 in (.+/<) + (.+/<)`
 
 While *allowed*, this is not how operators are generally used. They exist for a special purpose: If they are
-bound to a multi-argument function, they can be used in infix notation after stripping the parentheses.
-For instance:
+bound to a multi-argument function, they can be used in **infix notation** (i.e. between the first two
+arguments) after stripping the parentheses like this:
 
 `let (-#-) x y = x * y in 2 -#- 3`
 
@@ -186,6 +188,11 @@ like any other, you can rebind (not that this is generally recommended):
 
 `let a + b = 500 in 1 + 1`
 
+Also, in the earlier example, we defined `(-#-)` as `x -#- y = x * y`, but since `(*)` is, itself a curried
+two-parameter function, we could have defined it like:
+
+`let (-#-) = (*) in 2 -#- 3`
+
 ### Negation
 
 The standard `(-)` operator is used for subtraction, so `5 - 3` and `(-) 5 3` evaluate to `2`. However,
@@ -210,7 +217,7 @@ Fixity
 
 ### Associativity
 
-Whenever using infix form it is possible to chain function applications like: `a -#- b -#- c` or
+Whenever using infix notation it is possible to chain function applications like: `a -#- b -#- c` or
 ``a `foo` b `foo` c``. However, this introduces ambiguity: Should these be evaluated as `(a -#- b) -#- c` and
 ``(a `foo` b) `foo` c``, or as `a -#- (b -#- c)` and ``a `foo` (b `foo` c)``? This is a question of the
 operator's **associativity**. There are four types of associativity:
@@ -225,7 +232,7 @@ operator's **associativity**. There are four types of associativity:
   For instance, addition is associative. As in, `2 + 3 + 4` can be evaluated as `(2 + 3) + 4` or as
   `2 + (3 + 4)` and you get `9` either way. However, Haskell requires a convention be chosen even for
   associative operators, so the standard `(+)` operator is (arbitrarily) defined as left-associative.
-- An operator is **non-associative** if it can't be chained at all. Haskell will give you an error
+- An operator is **non-associative** if it can't be chained at all. The compiler will give you an error
   message if you attempt to chain a non-associative operator.
 
 Haskell allows you to use a so-called **fixity declaration** to declare the associativity of a bound
@@ -260,15 +267,27 @@ aren't allowed to be chained, and parentheses are required.
 Procedure Composition
 ---------------------
 
-### Output-Only
+### Introduction
+
+As mentioned in Chapter 1, a procedure is a series of instructions that can be executed (or "run" or "called")
+by a program. The compiler will look specifically in the `Main` module for a variable called `main` that's
+bound to a procedure, and will create a program that executes that.
+
+Aside from the program's execution of that so-called entry-point procedure, the only place that a procedure
+may be executed in Haskell is from within another procedure. If we want to make a more complex program than
+one that simply displays "Hello World!", we need to build our own procedures. This is done through the
+composition or combination of simpler procedures. 
+
+### "Then" Operator
 
 The Prelude provides some functions for composing procedures. The simplest is called `(>>)`, which you can
-pronounce as "then". In `ch2/`, create a new file called "Main.hs" containing:
+pronounce as "then". The `(>>)` operator takes two procedures as arguments and builds a new one that, *if*
+executed, will run the first followed by the second. In `ch2/`, create a new file called "Main.hs" containing:
 
 ```hs
 module Main where
 
-main = putStrLn "Line 1" >> putStrLn "Line 2" >> putStrLn "Line 3"
+main = putStrLn "Line 1" >> putStrLn "Line 2"
 ```
 
 Compile it with `ghc Main`, and then run the resulting program. You should see the following output:
@@ -276,44 +295,100 @@ Compile it with `ghc Main`, and then run the resulting program. You should see t
 ```console
 Line 1
 Line 2
-Line 3
 ```
 
-The `(>>)` operator takes two procedures and builds a new one that, *if* executed, will execute its first
-argument followed by its second argument. It's associative, because the same sequence of execution happens
-in both `a >> (b >> c)` and `(a >> b) >> c`, so it can be unambiguously chained.
+However, remember that `(>>)` doesn't execute its arguments. It only builds a new procedure that will execute
+them if it is, itself, executed. So for instance, if you write and compile this, you will not see the two
+lines displayed, only "Hello World!":
 
-### Input
+```hs
+module Main where
 
-The only procedures we've seen so far output text, but what if we want to get input back from the user?
-While not obvious with `putStrLn`, procedures always have execution results. In the case of `putStrLn`,
-its execution result is always a special value called `()`, pronounced "unit". This is a useful value
-for when a procedure must return *something* but has nothing useful to return.
+main = putStrLn "Hello World!"
+printLines = putStrLn "Line 1" >> putStrLn "Line 2"
+```
 
-An example of a procedure that does return something useful is `getLine`, provided by the Prelude. If this
-procedure is executed, it will prompt the user to enter a line of text, and then its result will be that
-text. But how do we get access to this?
+But if you do this, you will see "Hello World!" *and* the two lines:
 
-Let's say we want to make a procedure that will ask the user for a line of text and then immediately display
-it back to them (often called "echoing"). Remember that `putStrLn` is not, itself, a procedure, but a function
-that builds a procedure given a string. Procedures don't take parameters. The string to be displayed is built
-in to the procedure returned by a particular application of `putStrLn`. Thus, how an echo procedure must work
-is:
+```hs
+module Main where
 
-1. Run `getLine`, and get its result. Let's call this `line`.
-2. Apply `putStrLn` to `line` to build a new procedure that displays `line`
-3. Run this new `line`-displaying procedure.
+main = putStrLn "Hello World!" >> printLines
+printLines = putStrLn "Line 1" >> putStrLn "Line 2"
+```
 
-This is precisely what the Prelude-provided operator called `(>>=)` does. This can be pronounced "bind".
-Its first argument is a procedure. Its second argument is a function that builds a procedure. The way it
-works is that it will run the first procedure, apply the provided function to the execution result of that
-first procedure, and then run the procedure built by that function. Go ahead and edit Main.hs to look like
-the following, and then compile and run it:
+This operator is associative: `a >> (b >> c)` is a procedure that runs `a` and then runs procedure `b >> c`
+(which runs `b` and then `c`), so ultimately `a` then `b` then `c`. And `(a >> b) >> c` is a procedure that
+first runs procedure `a >> b` (which runs `a` then `b`) and then runs `c`, which is again `a` then `b` then
+`c`. Thus, we can chain the operators like `a >> b >> c`. We can add a third line to our program this way:
+
+```hs
+module Main where
+
+main = putStrLn "Line 1" >> putStrLn "Line 2" >> putStrLn "Line 3"
+```
+
+The longer this gets, the harder it is to read, so we can break this out across multiple lines like this:
+
+```hs
+module Main where
+
+main =
+  putStrLn "Line 1" >>
+  putStrLn "Line 2" >>
+  putStrLn "Line 3" >>
+  putStrLn "Line 4"
+```
+
+**Note:** Indentation matters in Haskell, so don't omit it. In this case, it indicates that the lines are still
+part of the `main` binding and not starting their own top-level declaration.
+
+### Execution Results
+
+While not obvious with `putStrLn`, procedures always have execution results. In the case of `putStrLn`, because
+its purpose is simply to output text, there is no *useful* result for it to return. When there is is the case,
+a procedure may choose to return the special Haskell value `()`, pronounced "unit".
+
+An example of a procedure that *does* return something useful is `getLine`, provided by the Prelude. When run,
+it will prompt the user to enter a line of text, and then its result will be a string containing that text.
+However, when we write `a >> b`, `a`'s execution result is discarded, while `b`'s execution result becomes that of
+`a >> b`. Thus, if you write, compile, and run the following, it will wait for your input, but whatever you enter
+will be discarded:
+
+```hs
+module Main where
+
+main = getLine >> putStrLn "Hello World!"
+```
+
+If you reverse the order to be `putStrLn "Hello World!" >> getLine`, then `getLine`'s result becomes the result
+of the `main` procedure. However, when the entry-point procedure completes, the program has no use for its result
+so it is also discarded in that case.
+
+### "Bind" Operator
+
+To resolve this, the Prelude provides another procedure-composing function called `(>>=)`, pronounced "bind".
+Like `(>>)`, its first argument is a procedure, but in contrast, its second argument is a *function* that builds
+a procedure from its parameter. The procedure built by `(>>=)` works as follows:
+
+1. Execute the first argument and get its result.
+2. Apply the provided function to that result to get a procedure based on it.
+3. Execute the prodecure built by that function application.
+
+Let's write a program that will ask the user for a line of text and then immediately display it back to them:
 
 ```hs
 module Main where
 
 main = getLine >>= \line -> putStrLn line
+```
+
+Since `putStrLn` is already a function that builds a procedure from its argument, this can instead be written:
+
+```hs
+module Main where
+
+main = getLine >>= putStrLn
 ```
 
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)
