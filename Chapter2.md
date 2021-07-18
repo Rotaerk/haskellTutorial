@@ -267,26 +267,15 @@ aren't allowed to be chained, and parentheses are required.
 Procedure Composition
 ---------------------
 
-### Introduction
-
-As mentioned in Chapter 1, a procedure is a series of instructions that can be executed (or "run" or "called")
-by a program. The compiler will look specifically in the `Main` module for a variable called `main` that's
-bound to a procedure, and will create a program that executes that.
-
-Aside from the program's execution of that so-called entry-point procedure, the only place that a procedure
-may be executed in Haskell is from within another procedure. If we want to make a more complex program than
-one that simply displays "Hello World!", we need to build our own procedures. This is done through the
-composition or combination of simpler procedures. 
-
 ### "Then" Operator
 
-The Prelude provides some functions for composing procedures. The simplest is called `(>>)`, which you can
-pronounce as "then". The `(>>)` operator takes two procedures as arguments and builds a new one that, *if*
-executed, will run the first followed by the second. In `ch2/`, create a new file called "Main.hs" containing:
+If we want to make a more complex program than one that simply displays "Hello World!", we need to build our
+own procedures. This is done through the composition (or combination) of simpler procedures, and the Prelude
+provides some functions for doing just this. The simplest is called `(>>)`, which you can pronounce as "then".
+The `(>>)` operator takes two procedures as arguments and builds a new one that, *if* executed, will run the
+first followed by the second. In `ch2/`, write a new file called "Main.hs" (or whatever) containing:
 
 ```hs
-module Main where
-
 main = putStrLn "Line 1" >> putStrLn "Line 2"
 ```
 
@@ -302,8 +291,6 @@ them if it is, itself, executed. So for instance, if you write and compile this,
 lines displayed, only "Hello World!":
 
 ```hs
-module Main where
-
 main = putStrLn "Hello World!"
 printLines = putStrLn "Line 1" >> putStrLn "Line 2"
 ```
@@ -311,8 +298,6 @@ printLines = putStrLn "Line 1" >> putStrLn "Line 2"
 But if you do this, you will see "Hello World!" *and* the two lines:
 
 ```hs
-module Main where
-
 main = putStrLn "Hello World!" >> printLines
 printLines = putStrLn "Line 1" >> putStrLn "Line 2"
 ```
@@ -323,16 +308,12 @@ first runs procedure `a >> b` (which runs `a` then `b`) and then runs `c`, which
 `c`. Thus, we can chain the operators like `a >> b >> c`. We can add a third line to our program this way:
 
 ```hs
-module Main where
-
 main = putStrLn "Line 1" >> putStrLn "Line 2" >> putStrLn "Line 3"
 ```
 
-The longer this gets, the harder it is to read, so we can break this out across multiple lines like this:
+The longer this gets, the harder it can be to read, so we can break this out across multiple lines like this:
 
 ```hs
-module Main where
-
 main =
   putStrLn "Line 1" >>
   putStrLn "Line 2" >>
@@ -346,49 +327,51 @@ part of the `main` binding and not starting their own top-level declaration.
 ### Execution Results
 
 While not obvious with `putStrLn`, procedures always have execution results. In the case of `putStrLn`, because
-its purpose is simply to output text, there is no *useful* result for it to return. When there is is the case,
-a procedure may choose to return the special Haskell value `()`, pronounced "unit".
+its purpose is simply to output text, there is no *useful* result for it to return. When this is the case, a
+procedure may choose to return the special Haskell value `()`, pronounced "unit", which is what `putStrLn` does.
 
 An example of a procedure that *does* return something useful is `getLine`, provided by the Prelude. When run,
 it will prompt the user to enter a line of text, and then its result will be a string containing that text.
-However, when we write `a >> b`, `a`'s execution result is discarded, while `b`'s execution result becomes that of
-`a >> b`. Thus, if you write, compile, and run the following, it will wait for your input, but whatever you enter
-will be discarded:
+However, the procedure built by `(>>)` always discards the execution result of the first argument, while the second
+argument's result becomes the overall procedure's result. Thus, if you run the following, it will wait for your
+input, but whatever you enter will be discarded:
 
 ```hs
-module Main where
-
 main = getLine >> putStrLn "Hello World!"
 ```
 
-If you reverse the order to be `putStrLn "Hello World!" >> getLine`, then `getLine`'s result becomes the result
-of the `main` procedure. However, when the entry-point procedure completes, the program has no use for its result
-so it is also discarded in that case.
+You can reverse the order to be `putStrLn "Hello World!" >> getLine`, and `getLine`'s result becomes the result
+of the `main` procedure. However, the program has no use for its result, so it is also discarded in that case.
 
 ### "Bind" Operator
 
 To resolve this, the Prelude provides another procedure-composing function called `(>>=)`, pronounced "bind".
 Like `(>>)`, its first argument is a procedure, but in contrast, its second argument is a *function* that builds
-a procedure from its parameter. The procedure built by `(>>=)` works as follows:
+a procedure. The procedure `a >>= f` will execute as follows:
 
-1. Execute the first argument and get its result.
-2. Apply the provided function to that result to get a procedure based on it.
-3. Execute the prodecure built by that function application.
+1. Execute `a` and capture its result. Let's call it `x`.
+2. Apply `f` to `x` to get a procedure. Let's call it `b`. 
+3. Execute `b` and return its result as the result of the overall procedure.
 
-Let's write a program that will ask the user for a line of text and then immediately display it back to them:
+Since `putStrLn` is a function that builds a procedure from a string, this is exactly the kind of thing `(>>=)`
+expects as its second argument. Thus, we can write a program that waits for user's input and then immediately
+displays it back to them like this:
 
 ```hs
-module Main where
-
-main = getLine >>= \line -> putStrLn line
+main = getLine >>= putStrLn
 ```
 
-Since `putStrLn` is already a function that builds a procedure from its argument, this can instead be written:
+We can also chain this with `(>>)` to display a prompt before waiting for input:
 
 ```hs
-module Main where
+main = putStrLn "Please enter text:" >> getLine >>= putStrLn
+```
 
-main = getLine >>= putStrLn
+If we want to augment the input, such as by preceding it with some other text, we'll use lambda notation
+to write our own function:
+
+```hs
+main = putStrLn "Please enter text:" >> getLine >>= \line -> putStrLn ("You entered: " ++ line)
 ```
 
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)

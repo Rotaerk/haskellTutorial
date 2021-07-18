@@ -411,22 +411,25 @@ ones. We will cover how to chain together procedures later.
 
 ### Hello World
 
-A Haskell program is written by creating a module called `Main` (and in this one case, the file name does *not*
-have to match the module name) and binding a top-level variable called `main` to a procedure. When GHC compiles
-the module, it specifically looks for this variable in this module, and it will build a program that, when run,
-executes the procedure it is bound to. Other procedures referenced, directly or indirectly, by the `main`
-procedure may run as a part of it, but `main` serves as the so-called **entry-point**.
+A Haskell program is written by creating a module called `Main` and binding a top-level variable called `main`
+to a procedure. When GHC compiles the module, it specifically looks for this variable in this module, and it
+will build a program that, when run, executes the procedure `main` is bound to. Other procedures referenced
+by the `main` procedure, directly or indirectly, may run as part of it, but `main` serves as the so-called
+**entry-point**.
+
+**Note:** The Main module is special in two more ways. First, its file name does not need to match the module
+name. Second, if you omit the module header from a module, it will be treated as `Main` by default. Thus, in
+future examples, unless I specify a module header, assume the example should be entered into your `Main`
+module's file.
 
 Let's create our first program, which will print the text "Hello World!" to the command-line interface. We do
 not need to piece together our own procedure for this, because the Prelude has us covered. It provides us a
 function called `putStrLn` that expects a string argument and gives back a procedure that contains the
-instructions for printing that string.
+instructions for printing it.
 
 Create a new file in `ch1/` called `HelloWorld.hs`, and write this to it:
 
 ```hs
-module Main where
-
 main = putStrLn "Hello World!"
 ```
 
