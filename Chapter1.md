@@ -154,10 +154,11 @@ A binding declaration is just one of many types of **declarations**, or statemen
 something to be true. More will be introduced later, but like binding declarations, none are expressions
 and are not evaluated.
 
-Every declaration has a limited context in which it is considered true, called its **scope**. In the case
-of a binding declaration, its scope can also be referred to as the variable's scope. If a declaration is
-considered true (or a variable is bound) in a given context, then the declaration or variable is said to
-be "in scope".
+Every declaration has a limited context in which it is considered true, called its **scope**. Over the
+course of this tutorial, we will introduce various means of using declarations, each with their own rules
+about the declaration's scope. In the case of a binding declaration, its scope can also be referred to as
+the variable's scope. If a declaration is considered true (or a variable is bound) in a given context, then
+the declaration or variable is said to be "in scope".
 
 Scopes can be nested within one another. An inner scope automatically inherits all of the outer scope's
 declarations, but it can also contain declarations of its own. In GHCi, every time you enter a new
