@@ -302,10 +302,12 @@ main = putStrLn "Hello World!" >> printLines
 printLines = putStrLn "Line 1" >> putStrLn "Line 2"
 ```
 
-This operator is associative: `a >> (b >> c)` is a procedure that runs `a` and then runs procedure `b >> c`
-(which runs `b` and then `c`), so ultimately `a` then `b` then `c`. And `(a >> b) >> c` is a procedure that
-first runs procedure `a >> b` (which runs `a` then `b`) and then runs `c`, which is again `a` then `b` then
-`c`. Thus, we can chain the operators like `a >> b >> c`. We can add a third line to our program this way:
+This operator is associative: `pa >> (pb >> pc)` is a procedure that runs `pa` and then runs procedure `pb >> pc`
+(which runs `pb` and then `pc`), so ultimately `pa` then `pb` then `pc`. And `(pa >> pb) >> pc` is a procedure
+that first runs procedure `pa >> pb` (which runs `pa` then `pb`) and then runs `pc`, which is again `pa` then
+`pb` then `pc`. Thus, we can chain the operators like `pa >> pb >> pc`.
+
+We can add a third line to our program this way:
 
 ```hs
 main = putStrLn "Line 1" >> putStrLn "Line 2" >> putStrLn "Line 3"
@@ -331,27 +333,37 @@ its purpose is simply to output text, there is no *useful* result for it to retu
 procedure may choose to return the special Haskell value `()`, pronounced "unit", which is what `putStrLn` does.
 
 An example of a procedure that *does* return something useful is `getLine`, provided by the Prelude. When run,
-it will prompt the user to enter a line of text, and then its result will be a string containing that text.
-However, the procedure built by `(>>)` always discards the execution result of the first argument, while the second
-argument's result becomes the overall procedure's result. Thus, if you run the following, it will wait for your
-input, but whatever you enter will be discarded:
+it will wait for the user to enter a line of text, and then its result will be a string containing that text.
+If you run the following program, you'll be presented with a cursor awaiting input. Once you type something and
+hit enter, it will display "Hello World!":
 
 ```hs
 main = getLine >> putStrLn "Hello World!"
 ```
 
-You can reverse the order to be `putStrLn "Hello World!" >> getLine`, and `getLine`'s result becomes the result
-of the `main` procedure. However, the program has no use for its result, so it is also discarded in that case.
+But as you can see, what you input was essentially ignored. This is because a procedure built by `(>>)` always
+discards the execution result of the first argument. 
+
+The result of the second argument becomes that of the overall procedure, so in the above program, because
+`putStrLn "Hello World!"`'s result is `()`, `main`'s result is also `()`. Of course, you can reverse the order
+of execution, so that it displays "Hello World!" *before* awaiting your input, and in this case, `main`'s result
+is the string you input:
+
+```hs
+main = putStrLn "Hello World!" >> getLine
+```
+
+However, the program running `main` has no use for its result, so it is discarded as well.
 
 ### "Bind" Operator
 
 To resolve this, the Prelude provides another procedure-composing function called `(>>=)`, pronounced "bind".
-Like `(>>)`, its first argument is a procedure, but in contrast, its second argument is a *function* that builds
-a procedure. The procedure `a >>= f` will execute as follows:
+Like `(>>)`, its first argument is a procedure, but its second argument is a *function* that builds a procedure.
+The procedure `pa >>= f` will execute as follows:
 
-1. Execute `a` and capture its result. Let's call it `x`.
-2. Apply `f` to `x` to get a procedure. Let's call it `b`. 
-3. Execute `b` and return its result as the result of the overall procedure.
+1. Execute `pa` and capture its result. Let's call it `a`.
+2. Apply `f` to `a` to get a procedure. Let's call it `pb`. 
+3. Execute `pb` and return its result as the result of the overall procedure.
 
 Since `putStrLn` is a function that builds a procedure from a string, this is exactly the kind of thing `(>>=)`
 expects as its second argument. Thus, we can write a program that waits for user's input and then immediately
@@ -367,11 +379,268 @@ We can also chain this with `(>>)` to display a prompt before waiting for input:
 main = putStrLn "Please enter text:" >> getLine >>= putStrLn
 ```
 
-If we want to augment the input, such as by preceding it with some other text, we'll use lambda notation
-to write our own function:
+We don't have a ready-made function like `putStrLn` that gives us the exact procedure we want. For instance,
+say we want to display "You entered: " just before repeating the user's input. We can write our own function
+that does this and use that instead:
+
+```hs
+main = putStrLn "Please enter text:" >> getLine >>= youEntered
+youEntered line = putStrLn ("You entered: " ++ line)
+```
+
+Or just use lambda notation directly in our procedure expression:
 
 ```hs
 main = putStrLn "Please enter text:" >> getLine >>= \line -> putStrLn ("You entered: " ++ line)
 ```
+
+### Multiple Binds
+
+Now what if we want two `(>>=)`s in our procedure? For instance, we'll echo user's input twice, each with a
+different prompt and prefix. Here we'll split over multiple lines for readability:
+
+```hs
+main =
+  putStrLn "Please enter your first input:" >>
+  getLine >>= putPrefixedStrLn "Your first input: " >>
+  putStrLn "Please enter your second input:" >>
+  getLine >>= putPrefixedStrLn "Your second input: " >>
+  putStrLn "Done!"
+
+putPrefixedStrLn prefix line = putStrLn (prefix ++ line)
+```
+
+Notice that our `putPrefixedStrLn` function is curried, and we're partially applying it twice within `main`.
+Specifically, we provide the first argument (the prefix) immediately, while the second argument (the line) is
+provided by `(>>=)` after it executes `getLine`.
+
+We can also do this inline with lambdas, but we'll need to wrap them in parentheses since we want more steps
+to follow them:
+
+```hs
+main =
+  putStrLn "Please enter your first input:" >>
+  getLine >>= (\line1 -> putStrLn ("Your first input: " ++ line1)) >>
+  putStrLn "Please enter your second input:" >>
+  getLine >>= (\line2 -> putStrLn ("Your second input: " ++ line2)) >>
+  putStrLn "Done!"
+```
+
+### Nested Binds
+
+But what if we want to request both inputs before repeating them back to the user? The `line` parameter's
+scope ends with the lambda, so by the time the second input has been requested, the first input has been
+forgotten. This is because, so far, the second argument to `(>>=)` has always been the *next step* of the
+procedure. The solution to this dilemma is to make the second argument to `(>>=)` actually be the *rest* of
+the procedure. For instance, the above program can be reorganized like this:
+
+```hs
+main =
+  putStrLn "Please enter your first input:" >>
+  getLine >>= (
+    \line1 ->
+      putStrLn ("Your first input: " ++ line1) >>
+      putStrLn "Please enter your second input:" >>
+      getLine >>= (
+        \line2 ->
+          putStrLn ("Your second input: " ++ line2) >>
+          putStrLn "Done!"
+      )
+  )
+```
+
+Notice that the first lambda doesn't end immediately after displaying the first line of input, but rather
+contains all the remaining steps of the program. Also, because the second lambda is nested within the first
+one, the `line1` parameter is still in scope within the second lambda.
+
+This nesting allows us to alter the program to collect the inputs before echoing either of them back to the
+user, by simply moving and indenting one line:
+
+```hs
+main =
+  putStrLn "Please enter your first input:" >>
+  getLine >>= (
+    \line1 ->
+      putStrLn "Please enter your second input:" >>
+      getLine >>= (
+        \line2 ->
+          putStrLn ("Your first input: " ++ line1) >>
+          putStrLn ("Your second input: " ++ line2) >>
+          putStrLn "Done!"
+      )
+  )
+```
+
+The parentheses around the lambdas here are actually optional. This is because of how Haskell tends to include
+everything after the `->` within the lambda. A lot of the indentation is also unnecessary. This procedure can
+be rewritten as follows:
+
+```hs
+main =
+  putStrLn "Please enter your first input:" >>
+  getLine >>= \line1 ->
+  putStrLn "Please enter your second input:" >>
+  getLine >>= \line2 ->
+  putStrLn ("Your first input: " ++ line1) >>
+  putStrLn ("Your second input: " ++ line2) >>
+  putStrLn "Done!"
+```
+
+The lack of nested indentation might fool you initially, but just remember that all the lines after `\line1 ->`
+are part of the first lambda, and all the lines after the `\line2 ->` are part of the second lambda. In other
+words, the second argument to each `(>>=)` is the entire rest of the procedure. This is the typical way in
+which `(>>=)` and `(>>)` are used.
+
+### "Then" And "Bind"
+
+By the way, `(>>)` is actually defined in terms of `(>>=)` as simply `a >> b = a >>= \_ -> b`. Here we've
+introduced a new type of pattern called the **wildcard pattern**, written as an underscore. Like variables, it
+applies no constraints on the structure of what it is bound to. So this could actually be written as
+`a >> b = a >>= \x -> b`. However, `_` is used to explicitly *avoid* naming the bound expression, which
+makes it clear that you have no intention of using it. This clearly shows that `(>>)` discards the execution
+result of its first argument.
+
+The above program could have actually been written as:
+
+```hs
+main =
+  putStrLn "Please enter your first input:" >>= \_ ->
+  getLine >>= \line1 ->
+  putStrLn "Please enter your second input:" >>= \_ ->
+  getLine >>= \line2 ->
+  putStrLn ("Your first input: " ++ line1) >>= \_ ->
+  putStrLn ("Your second input: " ++ line2) >>= \_ ->
+  putStrLn "Done!"
+```
+
+But of course `(>>)` makes it a bit cleaner.
+
+### Do Notation
+
+Haskell provides syntax sugar for writing expressions consisting of `(>>)` and `(>>=)` called **do notation**.
+This starts with the keyword `do` followed by a series of so-called **statements**. The entire expression
+written in do notation is called a **do block**. Here is the above program rewritten using do notation:
+
+```hs
+main = do
+  putStrLn "Please enter your first input:"
+  line1 <- getLine
+  putStrLn "Please enter your second input:"
+  line2 <- getLine
+  putStrLn ("Your first input: " ++ line1)
+  putStrLn ("Your second input: " ++ line2)
+  putStrLn "Done!"
+```
+
+Each line after the `do` is a statement, and there are two kinds demonstrated here. The simplest is just a
+procedure, such as the `putStrLn` lines. The other is a pattern followed by `<-` and then a procedure.
+
+Let's break down how this corresponds to the procedure composition operators. The do notation equivalent of
+`pa >> pb` is simply:
+
+```hs
+do
+  pa
+  pb
+```
+
+The do notation equivalent of `pa >>= \a -> pb` is:
+
+```hs
+do
+  a <- pa
+  pb
+```
+
+**Note:** These can also be written as `do { pa; pb }` and `do { a <- pa; pb }` if you don't want to split
+them across multiple lines.
+
+So basically, whenever you have a `<-` statement, this corresponds to the introduction of a lambda, where
+the pattern to the left of it is the lambda's parameter, and all remaining statements within the do block
+are contained within that lambda. Given this correspondence, a do block cannot end with a `<-` statement,
+and the procedure that it does end with decides the execution result of the whole do block.
+
+Also, just as `(>>)` is just a cleaner way to use `(>>=)` when the result is ignored, the same applies to
+simple procedure statements and `<-` statements (aside from the last one). The above program could be
+written as follows (not that you should):
+
+```hs
+main = do
+  _ <- putStrLn "Please enter your first input:"
+  line1 <- getLine
+  _ <- putStrLn "Please enter your second input:"
+  line2 <- getLine
+  _ <- putStrLn ("Your first input: " ++ line1)
+  _ <- putStrLn ("Your second input: " ++ line2)
+  putStrLn "Done!"
+```
+
+Return
+------
+
+In the above examples, we've only written a `main` procedure. However, for non-trivial programs, we don't
+tend to put everything directly into `main` because it can become hard to navigate the code. Instead, the
+code tends to be split across many procedures, while `main` is what ties them together.
+
+We didn't pay much attention to the actual result of `main` in those examples, because of the fact that it
+is discarded by the program. However, when writing other procedures, the result matters a lot, because it
+can be used by the calling procedure (the procedure running them).
+
+Let's write a procedure that simply prompts the user for some input and returns the user's input as its
+result:
+
+```hs
+promptInput = do
+  putStrLn "Please enter input:"
+  getLine
+```
+
+Remember that the final statement in the do block determines the result of the whole do block, so the line
+entered by the user becomes the result of `promptInput`.
+
+But what if we want something to prompt for two inputs and return both? We can start by writing:
+
+```hs
+promptTwoInputs = do
+  putStrLn "Please enter your first input:"
+  line1 <- getLine
+  putStrLn "Please enter your second input:"
+  line2 <- getLine
+  ...
+```
+
+But then how do we make the result of `promptTwoInputs` be `(line1, line2)`? If we simply end with the
+second `getLine` (and don't bind to `line2`), then `line1` will be lost and the result will only be the
+second line. The Prelude provides a function called `return` that builds a procedure that does nothing but
+return its argument as a result. With it, we can complete the above procedure to be:
+
+```hs
+promptTwoInputs = do
+  putStrLn "Please enter your first input:"
+  line1 <- getLine
+  putStrLn "Please enter your second input:"
+  line2 <- getLine
+  return (line1, line2)
+```
+
+Now we can rewrite our original program as follows:
+
+```hs
+main = do
+  (a, b) <- promptTwoInputs
+  putStrLn ("Your first input: " ++ a)
+  putStrLn ("Your second input: " ++ b)
+  putStrLn "Done!"
+
+promptTwoInputs = do
+  putStrLn "Please enter your first input:"
+  line1 <- getLine
+  putStrLn "Please enter your second input:"
+  line2 <- getLine
+  return (line1, line2)
+```
+
+Notice that we can use a tuple pattern on the left side of the `<-` because that matches the structure
+of the result of `promptTwoInputs`.
 
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)
