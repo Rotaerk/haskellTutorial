@@ -643,4 +643,10 @@ promptTwoInputs = do
 Notice that we can use a tuple pattern on the left side of the `<-` because that matches the structure
 of the result of `promptTwoInputs`.
 
+If you're coming from a background in procedural programming languages, you might be tempted to end
+every procedure with a `return`, but this is not necessary. For instance, if you have
+`do { pa; b <- pb; return b }` or `pa >> pb >>= \b -> return b` or `pa >> pb >>= return`, then these can
+simply be written as `do { pa; pb }` or `pa >> pb`. A `return` is only needed if you want to return a
+result different from that of the final step of the procedure.
+
 [Back](Chapter1.md) / [Top](README.md) / [Next](Chapter3.md)
